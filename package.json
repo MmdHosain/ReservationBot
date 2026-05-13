@@ -1,12 +1,12 @@
 {
-  "name": "bmi_calculation",
+  "name": "reservation-bot",
   "version": "1.0.0",
-  "description": "Bmi Calculation Bot @baleforge",
+  "description": "Reservation Bot @baleforge",
   "keywords":[
     "bale",
     "baleforge",
-    "bmi",
-    "calcualte",
+    "reservation",
+    "booking",
     "bot",
     "online",
     "group",
