@@ -1,0 +1,66 @@
+// src/bot.ts
+import { Telegraf, session } from "telegraf";
+import type { MyContext } from "./types/index.ts";
+import config from "./config.ts";
+
+import { stage } from "./scenes/index.ts";
+import { startHandler } from "./handlers/startHandler.ts";
+import { managerHandler } from "./handlers/managerHandler.ts";
+import { deleteHandler } from "./handlers/deleteHandler.ts";
+import { myBookingsHandler } from "./handlers/myBookingsHandler.ts";
+import { showCustomerDashboard, mySalonsHandler, deleteSalonHandler, showCustomerGuide } from "./handlers/customerDashboard.ts";
+import { updateCalendarType } from "./db/user.repository.ts";
+import { MESSAGES } from "./messages.ts";
+
+import { initDB } from "./db/index.ts";
+import { cancelAppointment } from "./db/appointment.repository.ts";
+import { startCronJobs } from "./cron.ts";
+
+const token: string = config.token;
+
+const bot = new Telegraf<MyContext>(token, {
+  telegram: {
+    apiRoot: "https://tapi.bale.ai",
+  },
+});
+
+bot.use(session());
+bot.use(stage.middleware());
+
+await initDB();
+startCronJobs(bot);
+
+bot.start(startHandler);
+bot.command("manager", managerHandler);
+bot.command("delete", deleteHandler);
+bot.command("my_bookings", myBookingsHandler);
+
+bot.command("shamsi", async (ctx) => {
+  await updateCalendarType(ctx.from.id, 'shamsi');
+  await ctx.reply(MESSAGES.calendarSetShamsi);
+});
+
+bot.command("miladi", async (ctx) => {
+  await updateCalendarType(ctx.from.id, 'miladi');
+  await ctx.reply(MESSAGES.calendarSetMiladi);
+});
+
+bot.action("view_my_bookings", myBookingsHandler);
+bot.action("view_my_salons", mySalonsHandler);
+bot.action("view_customer_guide", showCustomerGuide);
+bot.action("back_to_customer_dashboard", showCustomerDashboard);
+bot.action(/delete_salon_(\d+)/, deleteSalonHandler);
+
+bot.action(/cancel_appt_(\d+)/, async (ctx) => {
+  const apptId = parseInt(ctx.match[1]);
+  await cancelAppointment(apptId, ctx.from!.id);
+  await ctx.answerCbQuery("نوبت با موفقیت لغو شد.").catch(() => {});
+  if (ctx.callbackQuery.message) {
+      const msg = ctx.callbackQuery.message as any;
+      await ctx.editMessageText(msg.text + "\n\n(لغو شده)").catch(() => {});
+  }
+});
+
+bot.launch();
+
+console.log("✨ Bot is running…");
