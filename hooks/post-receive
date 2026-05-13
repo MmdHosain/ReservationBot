@@ -1,0 +1,28 @@
+#!/bin/bash
+# The folder where your actual live bot code will be extracted and run
+TARGET="/root/DEV/reservation-bot"
+GIT_DIR="/root/DEV/reservation-bot.git"
+
+# Create the live folder if it doesn't exist yet
+mkdir -p $TARGET
+
+echo "📥 Receiving new code..."
+git --work-tree=$TARGET --git-dir=$GIT_DIR checkout -f
+
+echo "📦 Installing dependencies..."
+cd $TARGET
+npm install
+
+
+
+if pm2 info reservation-bot > /dev/null 2>&1; then
+  echo "🚀 Restarting the bot..."
+  pm2 restart reservation-bot
+  
+  echo "✅ Deployment Successful!"
+else
+  echo "🆕 Bot is not running. Starting it for the first time..."
+  pm2 start npm --name "reservation-bot" -- run start
+  echo "✅ New message: Bot successfully started!"
+  echo "✅ Deployment Successful!"
+fi

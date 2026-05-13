@@ -1,15 +1,15 @@
 // src/scenes/onboarding/middleware.ts
 import { Markup } from "telegraf";
 import type { OnboardingContext } from "./types.ts";
-import { MESSAGES } from "../../messages.ts";
+import { MESSAGES } from "../../../messages.ts";
 import {
   getOrCreateUser,
   markUserOnboarded,
-  updateSalonName
-} from "../../db/user.repository.ts";
-import { saveService } from "../../db/service.repository.ts";
+  updateSalonName,
+} from "../../../db/user.repository.ts";
+import { saveService } from "../../../db/service.repository.ts";
 
-const DAYS_IRANIAN =[
+const DAYS_IRANIAN = [
   MESSAGES.days.saturday,
   MESSAGES.days.sunday,
   MESSAGES.days.monday,
@@ -36,7 +36,7 @@ export async function enterScene(ctx: OnboardingContext) {
     }
   } else {
     const keyboard = Markup.inlineKeyboard([
-[Markup.button.callback(MESSAGES.onboardingStartBtn, "start_service")],
+      [Markup.button.callback(MESSAGES.onboardingStartBtn, "start_service")],
     ]);
     if (ctx.callbackQuery) {
       await ctx.editMessageText(MESSAGES.welcome, keyboard);
@@ -69,11 +69,11 @@ export async function handleServiceName(ctx: OnboardingContext) {
   ctx.scene.session.draft.serviceName = serviceName;
 
   const keyboard = Markup.inlineKeyboard([
-[
+    [
       Markup.button.callback(MESSAGES.onboardingMinutes30, "dur_30"),
       Markup.button.callback(MESSAGES.onboardingMinutes60, "dur_60"),
     ],
-[
+    [
       Markup.button.callback(MESSAGES.onboardingMinutes45, "dur_45"),
       Markup.button.callback(MESSAGES.onboardingMinutes90, "dur_90"),
     ],
@@ -87,7 +87,7 @@ export async function handleDuration(ctx: OnboardingContext, duration: number) {
   ctx.scene.session.draft.duration = duration;
 
   const keyboard = Markup.inlineKeyboard(
-    DAYS_IRANIAN.map((day) =>[Markup.button.callback(day, `day_${day}`)])
+    DAYS_IRANIAN.map((day) => [Markup.button.callback(day, `day_${day}`)])
   );
 
   await ctx.editMessageText(MESSAGES.askServiceDays, keyboard);
@@ -98,7 +98,7 @@ export async function handleDaySelection(ctx: OnboardingContext, day: string) {
 
   const draft = ctx.scene.session.draft;
   if (!draft.daysOfWeek) {
-    draft.daysOfWeek =[];
+    draft.daysOfWeek = [];
   }
 
   const index = draft.daysOfWeek.indexOf(day);
@@ -121,14 +121,11 @@ export async function handleDaySelection(ctx: OnboardingContext, day: string) {
 
   const keyboard = Markup.inlineKeyboard([
     ...dayButtons.map((btn) => [btn]),
-[Markup.button.callback(MESSAGES.confirmAndSaveBtn, "confirm_days")],
+    [Markup.button.callback(MESSAGES.confirmAndSaveBtn, "confirm_days")],
   ]);
 
   if (ctx.callbackQuery) {
-    await ctx.editMessageText(
-      MESSAGES.chooseDayPrompt(selectedText),
-      keyboard
-    );
+    await ctx.editMessageText(MESSAGES.chooseDayPrompt(selectedText), keyboard);
   }
 }
 
@@ -136,7 +133,9 @@ export async function handleConfirmDays(ctx: OnboardingContext) {
   const draft = ctx.scene.session.draft;
 
   if (!draft.daysOfWeek || draft.daysOfWeek.length === 0) {
-    await ctx.answerCbQuery(MESSAGES.pleaseSelectAtLeastOneDay, { show_alert: true });
+    await ctx.answerCbQuery(MESSAGES.pleaseSelectAtLeastOneDay, {
+      show_alert: true,
+    });
     return;
   }
 
@@ -187,7 +186,7 @@ export async function handleSalonName(ctx: OnboardingContext) {
   await markUserOnboarded(user.id);
 
   const keyboard = Markup.inlineKeyboard([
-[Markup.button.callback(MESSAGES.goToDashboardBtn, "go_to_dashboard")]
+    [Markup.button.callback(MESSAGES.goToDashboardBtn, "go_to_dashboard")],
   ]);
 
   await ctx.reply(MESSAGES.onboardingComplete(salonName), keyboard);

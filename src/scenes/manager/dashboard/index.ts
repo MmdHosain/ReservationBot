@@ -2,8 +2,8 @@
 import { Scenes } from "telegraf";
 import type { DashboardContext } from "./types.ts";
 import * as middleware from "./middleware.ts";
-import { MESSAGES } from "../../messages.ts";
-import { deleteUserByTelegramId } from "../../db/user.repository.ts";
+import { MESSAGES } from "../../../messages.ts";
+import { deleteUserByTelegramId } from "../../../db/user.repository.ts";
 
 export const DASHBOARD_SCENE_ID = "dashboard";
 
@@ -56,7 +56,9 @@ dashboard.action("dash_restart", async (ctx) => {
   await ctx.answerCbQuery();
   await ctx.editMessageText(MESSAGES.deletingUser);
   const result = await deleteUserByTelegramId(ctx.from!.id);
-  await ctx.reply(result.success ? `✅ ${result.message}` : `❌ ${result.message}`);
+  await ctx.reply(
+    result.success ? `✅ ${result.message}` : `❌ ${result.message}`
+  );
   await ctx.scene.leave();
 });
 
