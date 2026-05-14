@@ -1,5 +1,5 @@
 import { Markup } from "telegraf";
-import type { InboxMessage } from "../3/7.ts";
+import type { InboxMessage } from "../types/inbox.types.ts";
 
 export const buildInboxKeyboard = (messages: InboxMessage[]) => {
   if (messages.length === 0) return Markup.inlineKeyboard([]);

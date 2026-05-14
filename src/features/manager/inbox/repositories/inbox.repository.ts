@@ -1,4 +1,4 @@
-import type { InboxMessage } from "../3/7.ts";
+import type { InboxMessage } from "../types/inbox.types.ts";
 
 // Mock data for initial development
 const mockMessages: InboxMessage[] = [
