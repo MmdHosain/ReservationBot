@@ -1,4 +1,5 @@
-import type { InboxContext } from "../types/inbox.types.ts";
+// import type { InboxContext } from "../types/inbox.types.ts";
+import type { MyContext } from "../../../../types/index.ts";
 import * as inboxService from "../services/inbox.service.ts";
 import * as inboxView from "../views/inbox.view.ts";
 
@@ -15,7 +16,7 @@ export const handleEnter = async (ctx: InboxContext) => {
   }
 };
 
-export const handleBackToInbox = async (ctx: InboxContext) => {
+export const handleBackToInbox = async (ctx: MyContext) => {
   try {
     await inboxView.backToInbox(ctx);
   } catch (error) {
@@ -24,7 +25,7 @@ export const handleBackToInbox = async (ctx: InboxContext) => {
   }
 };
 
-export const handleReadMessage = async (ctx: InboxContext) => {
+export const handleReadMessage = async (ctx: MyContext) => {
   try {
     const msgId = ctx.match?.[1];
     if (!msgId) {

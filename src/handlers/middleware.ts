@@ -1,10 +1,10 @@
 // src/handlers/middleware.ts
 import type { HandlerContext } from "./types.ts";
-import { 
-  getOrCreateUser, 
-  addCustomerSalon, 
-  deleteUserByTelegramId, 
-  updateCalendarType 
+import {
+  getOrCreateUser,
+  addCustomerSalon,
+  deleteUserByTelegramId,
+  updateCalendarType,
 } from "../db/user.repository.ts";
 import { MESSAGES } from "../messages.ts";
 import { CUSTOMER_SCENE_ID } from "../scenes/customer/index.ts";
@@ -30,6 +30,10 @@ export const startHandler = async (ctx: HandlerContext) => {
   }
 
   await showCustomerDashboard(ctx);
+};
+
+export const enterInbox = async (ctx: HandlerContext) => {
+  ctx.scene.enter("MANAGER_INBOX_SCENE");
 };
 
 export const managerHandler = async (ctx: HandlerContext) => {
@@ -61,12 +65,12 @@ export const deleteHandler = async (ctx: HandlerContext) => {
 
 export async function setShamsiCalendar(ctx: HandlerContext) {
   if (!ctx.from) return;
-  await updateCalendarType(ctx.from.id, 'shamsi');
+  await updateCalendarType(ctx.from.id, "shamsi");
   await ctx.reply(MESSAGES.calendarSetShamsi);
 }
 
 export async function setMiladiCalendar(ctx: HandlerContext) {
   if (!ctx.from) return;
-  await updateCalendarType(ctx.from.id, 'miladi');
+  await updateCalendarType(ctx.from.id, "miladi");
   await ctx.reply(MESSAGES.calendarSetMiladi);
 }
