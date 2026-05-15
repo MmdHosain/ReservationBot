@@ -4,9 +4,6 @@ export const MESSAGES = {
   deletingUser: "⏳ در حال حذف کاربر...",
   userNotFound: "کاربر یافت نشد.",
   userDeleted: (telegramId: number) => `کاربر با ID تلگرام ${telegramId} و تمام داده‌های مرتبط حذف شد.`,
-  
-  calendarSetShamsi: "✅ تقویم شما روی شمسی تنظیم شد.",
-  calendarSetMiladi: "✅ تقویم شما روی میلادی تنظیم شد.",
 
   customerGeneralWelcome: "👋 به ربات نوبت‌دهی خوش آمدید!\n\nبرای رزرو نوبت، لطفاً از لینک اختصاصی سالن مورد نظر خود استفاده کنید.\nشما می‌توانید نوبت‌ها و سالن‌های خود را از طریق دکمه‌های زیر مدیریت کنید:",
   viewMyBookingsBtn: "📅 نوبت‌های من",

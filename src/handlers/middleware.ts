@@ -4,7 +4,6 @@ import {
   getOrCreateUser,
   addCustomerSalon,
   deleteUserByTelegramId,
-  updateCalendarType,
 } from "../db/user.repository.ts";
 import { MESSAGES } from "../messages.ts";
 import { SCENE_ID as ONBOARDING_SCENE_ID } from "../features/manager/onboarding/onboarding.scene.ts";
@@ -63,14 +62,6 @@ export const deleteHandler = async (ctx: HandlerContext) => {
   }
 };
 
-export async function setShamsiCalendar(ctx: HandlerContext) {
-  if (!ctx.from) return;
-  await updateCalendarType(ctx.from.id, "shamsi");
-  await ctx.reply(MESSAGES.calendarSetShamsi);
-}
-
-export async function setMiladiCalendar(ctx: HandlerContext) {
-  if (!ctx.from) return;
-  await updateCalendarType(ctx.from.id, "miladi");
-  await ctx.reply(MESSAGES.calendarSetMiladi);
-}
+export const enterProfile = async (ctx: HandlerContext) => {
+  ctx.scene.enter("PROFILE_SCENE");
+};

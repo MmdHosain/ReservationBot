@@ -11,6 +11,4 @@ botHandlers.command("inbox", middleware.enterInbox);
 botHandlers.command("manager", middleware.managerHandler);
 botHandlers.command("customer", middleware.enterCustumerdashboared);
 botHandlers.command("delete", middleware.deleteHandler);
-
-botHandlers.command("shamsi", middleware.setShamsiCalendar);
-botHandlers.command("miladi", middleware.setMiladiCalendar);
+botHandlers.command("profile", middleware.enterProfile);
