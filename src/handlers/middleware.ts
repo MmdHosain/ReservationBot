@@ -7,7 +7,6 @@ import {
   updateCalendarType,
 } from "../db/user.repository.ts";
 import { MESSAGES } from "../messages.ts";
-import { CUSTOMER_SCENE_ID } from "../scenes/customer/index.ts";
 import { ONBOARDING_SCENE_ID } from "../scenes/manager/onboarding/index.ts";
 import { DASHBOARD_SCENE_ID } from "../scenes/manager/dashboard/index.ts";
 
@@ -24,7 +23,7 @@ export const startHandler = async (ctx: HandlerContext) => {
     const ownerId = parseInt(payload, 10);
     if (!isNaN(ownerId)) {
       await addCustomerSalon(telegramId, ownerId);
-      return ctx.scene.enter(CUSTOMER_SCENE_ID, { ownerTelegramId: ownerId });
+      await ctx.scene.enter("CUSTOMER_DASHBOARD_SCENE");
     }
   }
 
