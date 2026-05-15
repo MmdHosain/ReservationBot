@@ -7,8 +7,8 @@ import {
   updateCalendarType,
 } from "../db/user.repository.ts";
 import { MESSAGES } from "../messages.ts";
-import { ONBOARDING_SCENE_ID } from "../scenes/manager/onboarding/index.ts";
-import { DASHBOARD_SCENE_ID } from "../scenes/manager/dashboard/index.ts";
+import { SCENE_ID as ONBOARDING_SCENE_ID } from "../features/manager/onboarding/onboarding.scene.ts";
+import { SCENE_ID as DASHBOARD_SCENE_ID } from "../features/manager/dashboard/dashboard.scene.ts";
 
 export const startHandler = async (ctx: HandlerContext) => {
   const telegramId = ctx.from?.id;

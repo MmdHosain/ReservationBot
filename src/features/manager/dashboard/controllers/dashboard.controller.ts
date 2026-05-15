@@ -1,0 +1,51 @@
+// src/features/manager/dashboard/controllers/dashboard.controller.ts
+import * as service from "../services/dashboard.service.ts";
+import * as view from "../views/dashboard.view.ts";
+import { MESSAGES } from "../../../../messages.ts";
+
+export const handleEnter = async (ctx: any) => {
+  const user = await service.getUserInfo(ctx.from!.id);
+  const salonName = user?.salon_name || "سالن";
+  const botUsername = ctx.botInfo?.username || "bot";
+  await view.showDashboard(ctx, salonName, botUsername, ctx.from!.id);
+};
+
+export const handleMain = async (ctx: any) => {
+  await ctx.answerCbQuery();
+  await handleEnter(ctx);
+};
+
+export const handleAppointments = async (ctx: any) => {
+  await ctx.answerCbQuery();
+  const user = await service.getUserInfo(ctx.from!.id);
+  if (!user) return;
+  const stats = await service.getAppointmentsStats(user.id, user.calendar_type as 'shamsi'|'miladi');
+  await view.showAppointments(ctx, stats.count, stats.revenue, stats.list);
+};
+
+export const handleServices = async (ctx: any) => {
+  await ctx.answerCbQuery();
+  const user = await service.getUserInfo(ctx.from!.id);
+  if (!user) return;
+  const services = await service.getServices(user.id);
+  await view.showServices(ctx, services);
+};
+
+export const handleGuide = async (ctx: any) => {
+  await ctx.answerCbQuery();
+  await view.showGuide(ctx);
+};
+
+export const handleRestart = async (ctx: any) => {
+  await ctx.answerCbQuery();
+  await ctx.editMessageText(MESSAGES.deletingUser);
+  const result = await service.restartSalon(ctx.from!.id);
+  await view.showRestartResult(ctx, result.success, result.message);
+  await ctx.scene.leave();
+};
+
+export const handleExit = async (ctx: any) => {
+  await ctx.answerCbQuery();
+  await view.showExit(ctx);
+  await ctx.scene.leave();
+};
