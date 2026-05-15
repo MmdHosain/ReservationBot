@@ -62,6 +62,18 @@ CREATE TABLE IF NOT EXISTS customer_salons (
 );
 `;
 
+const createInboxMessagesTableSQL = `
+CREATE TABLE IF NOT EXISTS inbox_messages (
+  id SERIAL PRIMARY KEY,
+  salon_user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  customer_telegram_id BIGINT NOT NULL,
+  sender_name TEXT,
+  content TEXT NOT NULL,
+  is_read BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+`;
+
 export async function initDB() {
   try {
     await pool.query("SELECT 1");
@@ -85,6 +97,7 @@ export async function initDB() {
     await pool.query("ALTER TABLE appointments ADD COLUMN IF NOT EXISTS reminded_2h BOOLEAN DEFAULT FALSE;").catch(() => {});
 
     await pool.query(createCustomerSalonsTableSQL);
+    await pool.query(createInboxMessagesTableSQL);
 
     console.log("📦 Database ready and tables ensured.");
   } catch (err) {

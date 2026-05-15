@@ -25,3 +25,16 @@ export const showSalons = async (ctx: MyContext, salons: any[]) => {
 export const showDeleteSuccess = async (ctx: MyContext) => {
   await ctx.answerCbQuery(SalonMessages.deleteSuccess).catch(() => {});
 };
+
+export const showTypeMessage = async (ctx: MyContext) => {
+  const kb = buildBackKeyboard();
+  if (ctx.callbackQuery) {
+    await ctx.editMessageText(SalonMessages.typeMessage, kb).catch(() => {});
+  } else {
+    await ctx.reply(SalonMessages.typeMessage, kb);
+  }
+};
+
+export const showMsgSentSuccess = async (ctx: MyContext) => {
+  await ctx.reply(SalonMessages.msgSent);
+};

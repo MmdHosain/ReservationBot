@@ -18,6 +18,10 @@ Scene.action("dash_settings", async (ctx) => {
   await ctx.answerCbQuery();
   await ctx.scene.enter("MANAGER_SETTINGS_SCENE");
 });
+Scene.action("dash_inbox", async (ctx) => {
+  await ctx.answerCbQuery();
+  await ctx.scene.enter("MANAGER_INBOX_SCENE");
+});
 Scene.action("dash_guide", controller.handleGuide);
 Scene.action(/edit_svc_(\d+)/, async (ctx) => {
   await ctx.answerCbQuery();

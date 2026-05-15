@@ -8,4 +8,6 @@ export const Scene = new Scenes.BaseScene<MyContext>(SCENE_ID);
 
 Scene.enter(controller.handleEnter);
 Scene.action(/delete_salon_(\d+)/, controller.handleDelete);
+Scene.action(/send_msg_(\d+)/, controller.handleSendMessage);
 Scene.action("back_to_customer_dashboard", controller.handleBack);
+Scene.on("text", controller.handleText);

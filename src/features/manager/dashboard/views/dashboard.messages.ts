@@ -6,6 +6,7 @@ export const DashboardMessages = {
   servicesBtn: "✂️ مدیریت خدمات",
   staffBtn: "👥 مدیریت پرسنل",
   settingsBtn: "⚙️ تنظیمات کاری",
+  inboxBtn: "📥 پیام‌ها",
   guideBtn: "📚 راهنمای مدیر",
   restartBtn: "⚠️ ریست سالن (حذف همه)",
   exitBtn: "❌ خروج",

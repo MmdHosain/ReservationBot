@@ -7,6 +7,7 @@ export const buildMainKeyboard = () => Markup.inlineKeyboard([
   [Markup.button.callback(DashboardMessages.servicesBtn, "dash_services")],
   [Markup.button.callback(DashboardMessages.staffBtn, "dash_staff")],
   [Markup.button.callback(DashboardMessages.settingsBtn, "dash_settings")],
+  [Markup.button.callback(DashboardMessages.inboxBtn, "dash_inbox")],
   [Markup.button.callback(DashboardMessages.guideBtn, "dash_guide")],
   [Markup.button.callback(DashboardMessages.restartBtn, "dash_restart")],
   [Markup.button.callback(DashboardMessages.exitBtn, "dash_exit")],

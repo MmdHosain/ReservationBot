@@ -1,8 +1,11 @@
+// src/features/manager/inbox/views/inbox.messages.ts
 export const InboxMessages = {
-  welcome: "📥 Welcome to your Inbox. Here are your unread messages:",
-  noMessages: "📭 You have no unread messages at the moment.",
+  welcome: "📥 پیام‌های خوانده‌نشده شما:",
+  noMessages: "📭 شما در حال حاضر پیام خوانده‌نشده‌ای ندارید.",
   messageDetail: (sender: string, content: string, date: Date) =>
-    `👤 From: ${sender}\n📅 Date: ${date.toLocaleString()}\n\n💬 Message:\n${content}`,
-  error:
-    "⚠️ An error occurred while fetching your messages. Please try again later.",
+    `👤 فرستنده: ${sender}\n📅 تاریخ: ${date.toLocaleString('fa-IR')}\n\n💬 پیام:\n${content}`,
+  error: "⚠️ خطایی در دریافت پیام‌ها رخ داد. لطفا دوباره تلاش کنید.",
+  notManager: "❌ دسترسی غیرمجاز. شما هنوز به عنوان مدیر سالن ثبت‌نام نکرده‌اید.",
+  backToInboxBtn: "⬅️ بازگشت به لیست پیام‌ها",
+  backToDashBtn: "🔙 بازگشت به داشبورد"
 };

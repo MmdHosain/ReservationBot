@@ -2,14 +2,13 @@
 import type { MyContext } from "../../../../core/types.ts";
 import * as inboxService from "../services/inbox.service.ts";
 import * as inboxView from "../views/inbox.view.ts";
-
-export const handleInboxCommand = async (ctx: MyContext) => {
-  await ctx.scene.enter("MANAGER_INBOX_SCENE");
-};
+import { getUserByTelegramId } from "../../../../db/user.repository.ts";
 
 export const handleEnter = async (ctx: MyContext) => {
   try {
-    const messages = await inboxService.fetchUnreadInbox();
+    const user = await getUserByTelegramId(ctx.from!.id);
+    if (!user) return;
+    const messages = await inboxService.fetchUnreadInbox(user.id);
     if (messages.length === 0) {
       await inboxView.replyNoMessages(ctx);
       return;
@@ -37,7 +36,10 @@ export const handleReadMessage = async (ctx: MyContext) => {
       return;
     }
 
-    const msg = await inboxService.processReadMessage(msgId);
+    const user = await getUserByTelegramId(ctx.from!.id);
+    if (!user) return;
+
+    const msg = await inboxService.processReadMessage(msgId, user.id);
 
     if (msg) {
       await inboxView.showMessage(ctx, msg);
@@ -48,4 +50,9 @@ export const handleReadMessage = async (ctx: MyContext) => {
     console.error("[InboxController] Error reading message:", error);
     await inboxView.showErrorMessage(ctx);
   }
+};
+
+export const handleBackToDash = async (ctx: MyContext) => {
+  await ctx.answerCbQuery().catch(() => {});
+  await ctx.scene.enter("MANAGER_DASHBOARD_SCENE");
 };
