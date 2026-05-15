@@ -10,6 +10,7 @@ botHandlers.start(middleware.startHandler);
 
 botHandlers.command("inbox", middleware.enterInbox);
 botHandlers.command("manager", middleware.managerHandler);
+botHandlers.command("customer", middleware.enterCustumerdashboared);
 botHandlers.command("delete", middleware.deleteHandler);
 botHandlers.command("my_bookings", customerDashboard.myBookingsHandler);
 

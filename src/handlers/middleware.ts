@@ -35,7 +35,9 @@ export const startHandler = async (ctx: HandlerContext) => {
 export const enterInbox = async (ctx: HandlerContext) => {
   ctx.scene.enter("MANAGER_INBOX_SCENE");
 };
-
+export const enterCustumerdashboared = async (ctx: HandlerContext) => {
+  ctx.scene.enter("CUSTOMER_DASHBOARD_SCENE");
+};
 export const managerHandler = async (ctx: HandlerContext) => {
   const telegramId = ctx.from?.id;
   if (!telegramId) return;
