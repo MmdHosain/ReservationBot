@@ -1,21 +1,33 @@
 // src/features/customer/reservations/views/reservations.view.ts
-import type { MyContext } from "../../../../../types/index.ts";
+import type { MyContext } from "../../../../types/index.ts";
 import { ReservationMessages } from "./reservations.messages.ts";
-import { buildBackKeyboard, buildCancelKeyboard } from "./reservations.keyboards.ts";
-import { formatFriendlyDate } from "../../../../../utils/date.ts";
+import {
+  buildBackKeyboard,
+  buildCancelKeyboard,
+} from "./reservations.keyboards.ts";
+import { formatFriendlyDate } from "../../../../utils/date.ts";
 
-export const showReservations = async (ctx: MyContext, appointments: any[], calendar: string) => {
+export const showReservations = async (
+  ctx: MyContext,
+  appointments: any[],
+  calendar: string
+) => {
   const kb = buildBackKeyboard();
   if (appointments.length === 0) {
     if (ctx.callbackQuery) {
-      return ctx.editMessageText(ReservationMessages.noBookings, kb).catch(() => {});
+      return ctx
+        .editMessageText(ReservationMessages.noBookings, kb)
+        .catch(() => {});
     }
     return ctx.reply(ReservationMessages.noBookings, kb);
   }
 
   await ctx.reply(ReservationMessages.bookingsHeader);
   for (const a of appointments) {
-    const timeStr = typeof a.appointment_time === "string" ? a.appointment_time.substring(0, 5) : a.appointment_time;
+    const timeStr =
+      typeof a.appointment_time === "string"
+        ? a.appointment_time.substring(0, 5)
+        : a.appointment_time;
     const friendlyDate = formatFriendlyDate(a.appointment_date, calendar);
 
     let msgText = `${a.service_name} - ${friendlyDate} ساعت ${timeStr}`;
@@ -31,7 +43,9 @@ export const showCancelSuccess = async (ctx: MyContext) => {
   if (ctx.callbackQuery && ctx.callbackQuery.message) {
     const msg = ctx.callbackQuery.message as any;
     if (msg.text) {
-      await ctx.editMessageText(msg.text + "\n\n" + ReservationMessages.cancelledTag).catch(() => {});
+      await ctx
+        .editMessageText(msg.text + "\n\n" + ReservationMessages.cancelledTag)
+        .catch(() => {});
     }
   }
 };

@@ -1,5 +1,5 @@
 // src/features/customer/guide/controllers/guide.controller.ts
-import type { MyContext } from "../../../../../types/index.ts";
+import type { MyContext } from "../../../../types/index.ts";
 import * as view from "../views/guide.view.ts";
 
 export const handleEnter = async (ctx: MyContext) => {

@@ -1,5 +1,5 @@
 // src/features/customer/salons/controllers/salons.controller.ts
-import type { MyContext } from "../../../../../types/index.ts";
+import type { MyContext } from "../../../../types/index.ts";
 import * as service from "../services/salons.service.ts";
 import * as view from "../views/salons.view.ts";
 

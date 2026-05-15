@@ -10,7 +10,6 @@ import { MESSAGES } from "../messages.ts";
 import { CUSTOMER_SCENE_ID } from "../scenes/customer/index.ts";
 import { ONBOARDING_SCENE_ID } from "../scenes/manager/onboarding/index.ts";
 import { DASHBOARD_SCENE_ID } from "../scenes/manager/dashboard/index.ts";
-import { showCustomerDashboard } from "../scenes/customer/dashboard.ts";
 
 export const startHandler = async (ctx: HandlerContext) => {
   const telegramId = ctx.from?.id;
@@ -29,7 +28,7 @@ export const startHandler = async (ctx: HandlerContext) => {
     }
   }
 
-  await showCustomerDashboard(ctx);
+  await ctx.scene.enter("CUSTOMER_DASHBOARD_SCENE");
 };
 
 export const enterInbox = async (ctx: HandlerContext) => {
