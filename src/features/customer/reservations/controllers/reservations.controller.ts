@@ -1,5 +1,5 @@
 // src/features/customer/reservations/controllers/reservations.controller.ts
-import type { MyContext } from "../../../../types/index.ts";
+import type { MyContext } from "../../../../core/types.ts";
 import * as service from "../services/reservations.service.ts";
 import * as view from "../views/reservations.view.ts";
 

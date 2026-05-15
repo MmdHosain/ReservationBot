@@ -1,11 +1,11 @@
 // src/features/customer/reservations/views/reservations.view.ts
-import type { MyContext } from "../../../../types/index.ts";
+import type { MyContext } from "../../../../core/types.ts";
 import { ReservationMessages } from "./reservations.messages.ts";
 import {
   buildBackKeyboard,
   buildCancelKeyboard,
 } from "./reservations.keyboards.ts";
-import { formatFriendlyDate } from "../../../../utils/date.ts";
+import { formatFriendlyDate } from "../../../../core/utils/date.ts";
 
 export const showReservations = async (
   ctx: MyContext,

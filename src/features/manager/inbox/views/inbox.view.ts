@@ -1,7 +1,7 @@
 import { InboxMessages } from "./inbox.messages.ts";
 import { buildInboxKeyboard, buildBackKeyboard } from "./inbox.keyboards.ts";
 import type { InboxMessage, InboxContext } from "../types/inbox.types.ts";
-import type { MyContext } from "../../../../types/index.ts";
+import type { MyContext } from "../../../../core/types.ts";
 
 export const replyNoMessages = async (ctx: MyContext) => {
   await ctx.reply(InboxMessages.noMessages);

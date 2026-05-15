@@ -1,5 +1,5 @@
 import pkg from "pg";
-import config from "../config.ts";
+import config from "../core/config.ts";
 
 const { Pool } = pkg;
 

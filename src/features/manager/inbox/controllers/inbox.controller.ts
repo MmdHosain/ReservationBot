@@ -1,7 +1,11 @@
-// import type { InboxContext } from "../types/inbox.types.ts";
-import type { MyContext } from "../../../../types/index.ts";
+// src/features/manager/inbox/controllers/inbox.controller.ts
+import type { MyContext } from "../../../../core/types.ts";
 import * as inboxService from "../services/inbox.service.ts";
 import * as inboxView from "../views/inbox.view.ts";
+
+export const handleInboxCommand = async (ctx: MyContext) => {
+  await ctx.scene.enter("MANAGER_INBOX_SCENE");
+};
 
 export const handleEnter = async (ctx: MyContext) => {
   try {

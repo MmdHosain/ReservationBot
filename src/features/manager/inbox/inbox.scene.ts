@@ -1,7 +1,7 @@
 import { Scenes } from "telegraf";
 import * as inboxController from "./controllers/inbox.controller.ts";
 // import type { InboxContext } from "./types/inbox.types.ts";
-import type { MyContext } from "../../../types/index.ts";
+import type { MyContext } from "../../../core/types.ts";
 
 export const SCENE_ID = "MANAGER_INBOX_SCENE";
 

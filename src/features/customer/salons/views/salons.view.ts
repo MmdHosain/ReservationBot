@@ -1,5 +1,5 @@
 // src/features/customer/salons/views/salons.view.ts
-import type { MyContext } from "../../../../types/index.ts";
+import type { MyContext } from "../../../../core/types.ts";
 import { SalonMessages } from "./salons.messages.ts";
 import { buildSalonsKeyboard, buildBackKeyboard } from "./salons.keyboards.ts";
 

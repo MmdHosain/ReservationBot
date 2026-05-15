@@ -1,10 +1,13 @@
 // src/features/profile/profile/views/profile.view.ts
-import type { MyContext } from "../../../../types/index.ts";
+import type { MyContext } from "../../../../core/types.ts";
 import { ProfileMessages } from "./profile.messages.ts";
 import { buildProfileKeyboard } from "./profile.keyboards.ts";
 
 export const showProfile = async (ctx: MyContext, currentCalendar: string) => {
-  const msg = ProfileMessages.profileMenu + "\n\n" + ProfileMessages.currentCalendar(currentCalendar);
+  const msg =
+    ProfileMessages.profileMenu +
+    "\n\n" +
+    ProfileMessages.currentCalendar(currentCalendar);
   const kb = buildProfileKeyboard(currentCalendar);
 
   if (ctx.callbackQuery) {
@@ -15,7 +18,10 @@ export const showProfile = async (ctx: MyContext, currentCalendar: string) => {
 };
 
 export const showCalendarUpdated = async (ctx: MyContext, type: string) => {
-  const text = type === 'shamsi' ? ProfileMessages.calendarSetShamsi : ProfileMessages.calendarSetMiladi;
+  const text =
+    type === "shamsi"
+      ? ProfileMessages.calendarSetShamsi
+      : ProfileMessages.calendarSetMiladi;
   await ctx.answerCbQuery(text).catch(() => {});
 };
 

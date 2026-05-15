@@ -1,14 +1,14 @@
 // src/bot.ts
 import { Telegraf, session } from "telegraf";
-import type { MyContext } from "./types/index.ts";
-import config from "./config.ts";
+import type { MyContext } from "./core/types.ts";
+import config from "./core/config.ts";
 
-import { stage } from "./scenes/index.ts";
-import { botHandlers } from "./handlers/index.ts";
+import { stage } from "./core/stage.ts";
+import { botHandlers } from "./core/handlers.ts";
 
 import { initDB } from "./db/index.ts";
-import { startCronJobs } from "./cron.ts";
-import { launchBot } from "./utils/launcher.ts";
+import { startCronJobs } from "./core/cron.ts";
+import { launchBot } from "./core/launcher.ts";
 
 const token: string = config.token;
 

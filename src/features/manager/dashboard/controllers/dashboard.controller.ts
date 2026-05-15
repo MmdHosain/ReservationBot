@@ -1,7 +1,20 @@
 // src/features/manager/dashboard/controllers/dashboard.controller.ts
 import * as service from "../services/dashboard.service.ts";
 import * as view from "../views/dashboard.view.ts";
-import { MESSAGES } from "../../../../messages.ts";
+import { MESSAGES } from "../../../../core/messages.ts";
+
+export const handleManagerCommand = async (ctx: any) => {
+  const telegramId = ctx.from?.id;
+  if (!telegramId) return;
+
+  const user = await service.ensureUserAndGetInfo(telegramId);
+  if (user?.onboarded_at) {
+    await ctx.reply(MESSAGES.welcomeBack);
+    await ctx.scene.enter("MANAGER_DASHBOARD_SCENE");
+  } else {
+    await ctx.scene.enter("MANAGER_ONBOARDING_SCENE");
+  }
+};
 
 export const handleEnter = async (ctx: any) => {
   const user = await service.getUserInfo(ctx.from!.id);
@@ -19,7 +32,10 @@ export const handleAppointments = async (ctx: any) => {
   await ctx.answerCbQuery();
   const user = await service.getUserInfo(ctx.from!.id);
   if (!user) return;
-  const stats = await service.getAppointmentsStats(user.id, user.calendar_type as 'shamsi'|'miladi');
+  const stats = await service.getAppointmentsStats(
+    user.id,
+    user.calendar_type as "shamsi" | "miladi"
+  );
   await view.showAppointments(ctx, stats.count, stats.revenue, stats.list);
 };
 
