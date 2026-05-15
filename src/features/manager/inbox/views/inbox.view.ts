@@ -1,6 +1,13 @@
 // src/features/manager/inbox/views/inbox.view.ts
 import { InboxMessages } from "./inbox.messages.ts";
-import { buildInboxKeyboard, buildBackKeyboard, buildNoMessagesKeyboard } from "./inbox.keyboards.ts";
+import {
+  buildInboxKeyboard,
+  buildNoMessagesKeyboard,
+  buildBackToInboxKeyboard,
+  buildArchivedKeyboard,
+  buildNoArchivedKeyboard,
+  buildBackToArchiveKeyboard
+} from "./inbox.keyboards.ts";
 import type { InboxMessage } from "../types/inbox.types.ts";
 import type { MyContext } from "../../../../core/types.ts";
 
@@ -13,10 +20,7 @@ export const replyNoMessages = async (ctx: MyContext) => {
   }
 };
 
-export const showMessages = async (
-  ctx: MyContext,
-  messages: InboxMessage[]
-) => {
+export const showMessages = async (ctx: MyContext, messages: InboxMessage[]) => {
   const kb = buildInboxKeyboard(messages);
   if (ctx.callbackQuery) {
     await ctx.editMessageText(InboxMessages.welcome, kb).catch(() => {});
@@ -28,7 +32,32 @@ export const showMessages = async (
 export const showMessage = async (ctx: MyContext, msg: InboxMessage) => {
   await ctx.editMessageText(
     InboxMessages.messageDetail(msg.senderName, msg.content, msg.createdAt),
-    buildBackKeyboard()
+    buildBackToInboxKeyboard()
+  ).catch(() => {});
+};
+
+export const replyNoArchivedMessages = async (ctx: MyContext) => {
+  const kb = buildNoArchivedKeyboard();
+  if (ctx.callbackQuery) {
+    await ctx.editMessageText(InboxMessages.noArchivedMessages, kb).catch(() => {});
+  } else {
+    await ctx.reply(InboxMessages.noArchivedMessages, kb);
+  }
+};
+
+export const showArchivedMessages = async (ctx: MyContext, messages: InboxMessage[]) => {
+  const kb = buildArchivedKeyboard(messages);
+  if (ctx.callbackQuery) {
+    await ctx.editMessageText(InboxMessages.archivedWelcome, kb).catch(() => {});
+  } else {
+    await ctx.reply(InboxMessages.archivedWelcome, kb);
+  }
+};
+
+export const showArchivedMessageDetail = async (ctx: MyContext, msg: InboxMessage) => {
+  await ctx.editMessageText(
+    InboxMessages.messageDetail(msg.senderName, msg.content, msg.createdAt),
+    buildBackToArchiveKeyboard()
   ).catch(() => {});
 };
 

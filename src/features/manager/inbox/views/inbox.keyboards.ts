@@ -8,19 +8,41 @@ export const buildInboxKeyboard = (messages: InboxMessage[]) => {
     [Markup.button.callback(`📩 ${msg.senderName}`, `read_msg_${msg.id}`)]
   );
   
+  buttons.push([Markup.button.callback(InboxMessages.viewArchiveBtn, "view_archive")]);
   buttons.push([Markup.button.callback(InboxMessages.backToDashBtn, "back_to_dash")]);
 
   return Markup.inlineKeyboard(buttons);
 };
 
-export const buildBackKeyboard = () => {
+export const buildNoMessagesKeyboard = () => {
+  return Markup.inlineKeyboard([
+    [Markup.button.callback(InboxMessages.viewArchiveBtn, "view_archive")],
+    [Markup.button.callback(InboxMessages.backToDashBtn, "back_to_dash")],
+  ]);
+};
+
+export const buildArchivedKeyboard = (messages: InboxMessage[]) => {
+  const buttons = messages.map((msg) =>
+    [Markup.button.callback(`🗄 ${msg.senderName}`, `view_arc_msg_${msg.id}`)]
+  );
+  buttons.push([Markup.button.callback(InboxMessages.backToInboxBtn, "back_to_inbox")]);
+  return Markup.inlineKeyboard(buttons);
+};
+
+export const buildNoArchivedKeyboard = () => {
   return Markup.inlineKeyboard([
     [Markup.button.callback(InboxMessages.backToInboxBtn, "back_to_inbox")],
   ]);
 };
 
-export const buildNoMessagesKeyboard = () => {
+export const buildBackToInboxKeyboard = () => {
   return Markup.inlineKeyboard([
-    [Markup.button.callback(InboxMessages.backToDashBtn, "back_to_dash")],
+    [Markup.button.callback(InboxMessages.backToInboxBtn, "back_to_inbox")],
+  ]);
+};
+
+export const buildBackToArchiveKeyboard = () => {
+  return Markup.inlineKeyboard([
+    [Markup.button.callback(InboxMessages.backToArchiveBtn, "view_archive")],
   ]);
 };

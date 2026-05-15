@@ -7,6 +7,11 @@ export const fetchUnreadInbox = async (salonUserId: number): Promise<InboxMessag
   return messages.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 };
 
+export const fetchArchivedInbox = async (salonUserId: number): Promise<InboxMessage[]> => {
+  const messages = await repository.getArchivedMessages(salonUserId);
+  return messages.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+};
+
 export const processReadMessage = async (
   id: string,
   salonUserId: number
@@ -19,4 +24,11 @@ export const processReadMessage = async (
     if (success) return msg;
   }
   return null;
+};
+
+export const getMessage = async (
+  id: string,
+  salonUserId: number
+): Promise<InboxMessage | null> => {
+  return await repository.getMessageById(id, salonUserId);
 };
