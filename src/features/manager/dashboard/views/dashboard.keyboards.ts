@@ -11,6 +11,7 @@ export const buildMainKeyboard = () => Markup.inlineKeyboard([
 ]);
 
 export const buildToolsKeyboard = () => Markup.inlineKeyboard([
+  [Markup.button.callback(DashboardMessages.billingBtn, "dash_billing")],
   [Markup.button.callback(DashboardMessages.staffBtn, "dash_staff")],
   [Markup.button.callback(DashboardMessages.settingsBtn, "dash_settings")],
   [Markup.button.callback(DashboardMessages.guideBtn, "dash_guide")],

@@ -13,3 +13,8 @@ Scene.action("back_dash", async (ctx) => {
   await ctx.answerCbQuery().catch(() => {});
   await ctx.scene.enter("MANAGER_DASHBOARD_SCENE");
 });
+Scene.action("exit_panel", async (ctx) => {
+  await ctx.answerCbQuery().catch(() => {});
+  await ctx.editMessageText("از پنل خارج شدید. برای ورود مجدد /manager را ارسال کنید.").catch(() => {});
+  await ctx.scene.leave();
+});

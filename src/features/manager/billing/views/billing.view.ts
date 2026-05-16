@@ -5,14 +5,15 @@ import { buildPackagesKeyboard, buildMockPaymentKeyboard } from "./billing.keybo
 
 export const showPackages = async (ctx: MyContext, isExpired: boolean, expireDate: string | Date | null) => {
   let text = isExpired || !expireDate ? BillingMessages.expiredSub : BillingMessages.activeSub(new Date(expireDate));
+  text += BillingMessages.howItWorks;
   text += BillingMessages.choosePackage;
   
   const kb = buildPackagesKeyboard(isExpired);
   
   if (ctx.callbackQuery) {
-    await ctx.editMessageText(text, kb).catch(() => {});
+    await ctx.editMessageText(text, { parse_mode: "Markdown", ...kb }).catch(() => {});
   } else {
-    await ctx.reply(text, kb);
+    await ctx.reply(text, { parse_mode: "Markdown", ...kb });
   }
 };
 

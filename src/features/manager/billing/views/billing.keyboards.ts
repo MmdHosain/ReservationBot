@@ -11,6 +11,8 @@ export const buildPackagesKeyboard = (isExpired: boolean) => {
   ];
   if (!isExpired) {
     buttons.push([Markup.button.callback(BillingMessages.backBtn, "back_dash")]);
+  } else {
+    buttons.push([Markup.button.callback(BillingMessages.exitBtn, "exit_panel")]);
   }
   return Markup.inlineKeyboard(buttons);
 };

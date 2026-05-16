@@ -14,6 +14,10 @@ Scene.action("dash_main", controller.handleMain);
 Scene.action("dash_tools_menu", controller.handleToolsMenu);
 Scene.action("dash_appointments", controller.handleAppointments);
 Scene.action("dash_services", controller.handleServices);
+Scene.action("dash_billing", async (ctx) => {
+  await ctx.answerCbQuery();
+  await ctx.scene.enter("MANAGER_BILLING_SCENE");
+});
 Scene.action("dash_staff", async (ctx) => {
   await ctx.answerCbQuery();
   await ctx.scene.enter("MANAGER_STAFF_SCENE");
