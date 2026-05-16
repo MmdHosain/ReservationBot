@@ -35,6 +35,11 @@ export const handleMain = async (ctx: DashboardContext) => {
   await handleEnter(ctx);
 };
 
+export const handleToolsMenu = async (ctx: DashboardContext) => {
+  await ctx.answerCbQuery();
+  await view.showToolsMenu(ctx);
+};
+
 export const handleAppointments = async (ctx: DashboardContext) => {
   await ctx.answerCbQuery();
   const user = await service.getUserInfo(ctx.from!.id);
