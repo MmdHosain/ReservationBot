@@ -6,4 +6,5 @@ export interface DashboardSession extends Scenes.SceneSessionData {
 export interface DashboardContext extends Context {
   session: Scenes.SceneSession<DashboardSession>;
   scene: Scenes.SceneContextScene<DashboardContext, DashboardSession>;
+  match: any;
 }

@@ -2,13 +2,14 @@
 import * as service from "../services/settings.service.ts";
 import * as view from "../views/settings.view.ts";
 import { SettingsMessages } from "../views/settings.messages.ts";
+import type { SettingsContext } from "../types/settings.types.ts";
 
-export const handleEnter = async (ctx: any) => {
+export const handleEnter = async (ctx: SettingsContext) => {
   await view.showPrompt(ctx);
 };
 
-export const handleInput = async (ctx: any) => {
-  if (!("text" in ctx.message) || !ctx.message.text) return;
+export const handleInput = async (ctx: SettingsContext) => {
+  if (!ctx.message || !("text" in ctx.message) || !ctx.message.text) return;
   const text = ctx.message.text.trim();
   if (text.startsWith("break ")) {
     const parts = text.replace("break ", "").split("-");

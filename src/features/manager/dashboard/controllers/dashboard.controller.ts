@@ -2,8 +2,10 @@
 import * as service from "../services/dashboard.service.ts";
 import * as view from "../views/dashboard.view.ts";
 import { MESSAGES } from "../../../../core/messages.ts";
+import type { DashboardContext } from "../types/dashboard.types.ts";
+import type { MyContext } from "../../../../core/types.ts";
 
-export const handleManagerCommand = async (ctx: any) => {
+export const handleManagerCommand = async (ctx: MyContext) => {
   const telegramId = ctx.from?.id;
   if (!telegramId) return;
 
@@ -16,19 +18,19 @@ export const handleManagerCommand = async (ctx: any) => {
   }
 };
 
-export const handleEnter = async (ctx: any) => {
+export const handleEnter = async (ctx: DashboardContext) => {
   const user = await service.getUserInfo(ctx.from!.id);
   const salonName = user?.salon_name || "سالن";
   const botUsername = ctx.botInfo?.username || "bot";
   await view.showDashboard(ctx, salonName, botUsername, ctx.from!.id);
 };
 
-export const handleMain = async (ctx: any) => {
+export const handleMain = async (ctx: DashboardContext) => {
   await ctx.answerCbQuery();
   await handleEnter(ctx);
 };
 
-export const handleAppointments = async (ctx: any) => {
+export const handleAppointments = async (ctx: DashboardContext) => {
   await ctx.answerCbQuery();
   const user = await service.getUserInfo(ctx.from!.id);
   if (!user) return;
@@ -39,7 +41,7 @@ export const handleAppointments = async (ctx: any) => {
   await view.showAppointments(ctx, stats.count, stats.revenue, stats.list);
 };
 
-export const handleServices = async (ctx: any) => {
+export const handleServices = async (ctx: DashboardContext) => {
   await ctx.answerCbQuery();
   const user = await service.getUserInfo(ctx.from!.id);
   if (!user) return;
@@ -47,12 +49,12 @@ export const handleServices = async (ctx: any) => {
   await view.showServices(ctx, services);
 };
 
-export const handleGuide = async (ctx: any) => {
+export const handleGuide = async (ctx: DashboardContext) => {
   await ctx.answerCbQuery();
   await view.showGuide(ctx);
 };
 
-export const handleRestart = async (ctx: any) => {
+export const handleRestart = async (ctx: DashboardContext) => {
   await ctx.answerCbQuery();
   await ctx.editMessageText(MESSAGES.deletingUser);
   const result = await service.restartSalon(ctx.from!.id);
@@ -60,7 +62,7 @@ export const handleRestart = async (ctx: any) => {
   await ctx.scene.leave();
 };
 
-export const handleExit = async (ctx: any) => {
+export const handleExit = async (ctx: DashboardContext) => {
   await ctx.answerCbQuery();
   await view.showExit(ctx);
   await ctx.scene.leave();

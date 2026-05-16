@@ -12,4 +12,5 @@ export interface OnboardingSession extends Scenes.SceneSessionData {
 export interface OnboardingContext extends Context {
   session: Scenes.SceneSession<OnboardingSession>;
   scene: Scenes.SceneContextScene<OnboardingContext, OnboardingSession>;
+  match: any;
 }

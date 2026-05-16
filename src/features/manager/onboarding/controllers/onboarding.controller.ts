@@ -2,35 +2,36 @@
 import * as service from "../services/onboarding.service.ts";
 import * as view from "../views/onboarding.view.ts";
 import { OnboardingMessages } from "../views/onboarding.messages.ts";
+import type { OnboardingContext } from "../types/onboarding.types.ts";
 
-export const handleEnter = async (ctx: any) => {
+export const handleEnter = async (ctx: OnboardingContext) => {
   ctx.scene.session.draft = { serviceName: undefined, duration: undefined, daysOfWeek: undefined };
   ctx.scene.session.step = undefined;
   const status = await service.checkUserStatus(ctx.from!.id);
   await view.showWelcome(ctx, status.isNewUser);
 };
 
-export const handleStart = async (ctx: any) => {
+export const handleStart = async (ctx: OnboardingContext) => {
   await ctx.answerCbQuery();
   ctx.scene.session.draft = { serviceName: undefined, duration: undefined, daysOfWeek: undefined };
   await view.showAskServiceName(ctx);
 };
 
-export const handleServiceName = async (ctx: any) => {
-  if (!("text" in ctx.message) || !ctx.message.text) return;
+export const handleServiceName = async (ctx: OnboardingContext) => {
+  if (!ctx.message || !("text" in ctx.message) || !ctx.message.text) return;
   const serviceName = ctx.message.text.trim();
   if (!serviceName) return view.showAskServiceName(ctx);
   ctx.scene.session.draft.serviceName = serviceName;
   await view.showAskDuration(ctx);
 };
 
-export const handleDuration = async (ctx: any, duration: number) => {
+export const handleDuration = async (ctx: OnboardingContext, duration: number) => {
   await ctx.answerCbQuery();
   ctx.scene.session.draft.duration = duration;
   await view.showAskDays(ctx, ctx.scene.session.draft.daysOfWeek || []);
 };
 
-export const handleDaySelection = async (ctx: any, day: string) => {
+export const handleDaySelection = async (ctx: OnboardingContext, day: string) => {
   await ctx.answerCbQuery();
   const draft = ctx.scene.session.draft;
   if (!draft.daysOfWeek) draft.daysOfWeek = [];
@@ -40,7 +41,7 @@ export const handleDaySelection = async (ctx: any, day: string) => {
   await view.showAskDays(ctx, draft.daysOfWeek);
 };
 
-export const handleConfirmDays = async (ctx: any) => {
+export const handleConfirmDays = async (ctx: OnboardingContext) => {
   const draft = ctx.scene.session.draft;
   if (!draft.daysOfWeek || draft.daysOfWeek.length === 0) {
     return view.showAlert(ctx, OnboardingMessages.pleaseSelectAtLeastOneDay);
@@ -61,8 +62,8 @@ export const handleConfirmDays = async (ctx: any) => {
   }
 };
 
-export const handleSalonName = async (ctx: any) => {
-  if (!("text" in ctx.message) || !ctx.message.text) return;
+export const handleSalonName = async (ctx: OnboardingContext) => {
+  if (!ctx.message || !("text" in ctx.message) || !ctx.message.text) return;
   const salonName = ctx.message.text.trim();
   if (!salonName) return view.showAskSalonName(ctx);
   const status = await service.checkUserStatus(ctx.from!.id);
