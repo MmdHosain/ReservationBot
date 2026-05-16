@@ -26,9 +26,9 @@ export const showGuide = async (ctx: DashboardContext) => {
   await ctx.editMessageText(DashboardMessages.managerGuide, { parse_mode: "Markdown", ...buildBackToToolsKeyboard() }).catch(() => {});
 };
 
-export const showAppointments = async (ctx: DashboardContext, count: number, revenue: number, list: string) => {
+export const showAppointments = async (ctx: DashboardContext, count: number, list: string) => {
   const listText = count === 0 ? DashboardMessages.noAppointments : list;
-  const msg = DashboardMessages.appointments(count, revenue, listText);
+  const msg = DashboardMessages.appointments(count, listText);
   await ctx.editMessageText(msg, { parse_mode: "Markdown", ...buildBackKeyboard() }).catch(() => {});
 };
 

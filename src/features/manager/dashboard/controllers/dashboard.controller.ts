@@ -48,7 +48,7 @@ export const handleAppointments = async (ctx: DashboardContext) => {
     user.id,
     user.calendar_type as "shamsi" | "miladi"
   );
-  await view.showAppointments(ctx, stats.count, stats.revenue, stats.list);
+  await view.showAppointments(ctx, stats.count, stats.list);
 };
 
 export const handleServices = async (ctx: DashboardContext) => {

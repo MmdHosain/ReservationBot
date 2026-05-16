@@ -15,8 +15,8 @@ export const DashboardMessages = {
   exitBtn: "❌ خروج",
   backBtn: "🔙 بازگشت",
   noAppointments: "بدون نوبت\n\n",
-  appointments: (count: number, revenue: number, list: string) => 
-    `📅 *نوبت‌های آینده:*\n\n${list}\n📊 *آمار:*\nدرآمد تقریبی: ${count} × ۲۵۰۰۰۰ = ${revenue} تومان`,
+  appointments: (count: number, list: string) => 
+    `📅 *نوبت‌های آینده (${count} نوبت):*\n\n${list}`,
   servicesTitle: "مدیریت خدمات:\nبرای ویرایش روی هر کدام کلیک کنید:",
   servicesList: (list: string) => `✂️ *خدمات سالن شما:*\n\n${list}`,
   serviceListItemBtn: (name: string, duration: number) => `✂️ ${name} (${duration} دقیقه)`,

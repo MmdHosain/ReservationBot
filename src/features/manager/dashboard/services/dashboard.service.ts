@@ -21,7 +21,6 @@ export const getAppointmentsStats = async (
   calendar: "shamsi" | "miladi"
 ) => {
   const appointments = await getAppointmentsForOwner(userId);
-  const avgPrice = 250000;
   const count = appointments.length;
   let list = "";
 
@@ -37,7 +36,7 @@ export const getAppointmentsStats = async (
     })${staffInfo}\n`;
   });
 
-  return { count, list, revenue: count * avgPrice };
+  return { count, list };
 };
 
 export const getServices = async (userId: number) => {
