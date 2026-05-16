@@ -2,9 +2,12 @@
 import { Scenes } from "telegraf";
 import * as controller from "./controllers/services.controller.ts";
 import type { ServicesContext } from "./types/services.types.ts";
+import { subscriptionGuard } from "../../../core/middlewares/subscription.guard.ts";
 
 export const SCENE_ID = "MANAGER_SERVICES_SCENE";
 export const Scene = new Scenes.BaseScene<ServicesContext>(SCENE_ID);
+
+Scene.use(subscriptionGuard);
 
 Scene.enter(controller.handleEnter);
 Scene.action("menu", async (ctx) => {

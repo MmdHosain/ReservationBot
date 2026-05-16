@@ -1,5 +1,5 @@
 // src/features/manager/onboarding/services/onboarding.service.ts
-import { getOrCreateUser, markUserOnboarded, updateSalonName } from "../../../../db/user.repository.ts";
+import { getOrCreateUser, markUserOnboarded, updateSalonName, startFreeTrial } from "../../../../db/user.repository.ts";
 import { saveService } from "../../../../db/service.repository.ts";
 
 export const checkUserStatus = async (telegramId: number) => {
@@ -14,4 +14,5 @@ export const createService = async (userId: number, name: string, duration: numb
 export const registerSalon = async (userId: number, salonName: string) => {
   await updateSalonName(userId, salonName);
   await markUserOnboarded(userId);
+  await startFreeTrial(userId, 14); // 14 days free trial
 };

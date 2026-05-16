@@ -10,6 +10,14 @@ export const handleStartCommand = async (ctx: MyContext) => {
   const parts = text.split(" ");
 
   if (parts.length > 1) {
+    const ownerId = parseInt(parts[1], 10);
+    const owner = await service.getSalonOwner(ownerId);
+    
+    if (owner && owner.subscription_expires_at && new Date(owner.subscription_expires_at) < new Date()) {
+      await ctx.reply("متأسفانه نوبت‌دهی آنلاین این سالن در حال حاضر غیرفعال است.");
+      return;
+    }
+
     await service.processStartPayload(telegramId, parts[1]);
   } else {
     await service.ensureUserExists(telegramId);

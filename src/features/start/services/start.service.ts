@@ -2,7 +2,12 @@
 import {
   getOrCreateUser,
   addCustomerSalon,
+  getUserByTelegramId,
 } from "../../../db/user.repository.ts";
+
+export const getSalonOwner = async (telegramId: number) => {
+  return await getUserByTelegramId(telegramId);
+};
 
 export const processStartPayload = async (
   telegramId: number,

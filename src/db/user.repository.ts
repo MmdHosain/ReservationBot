@@ -132,3 +132,11 @@ export async function updateDeposit(telegramId: number, amount: number) {
     [amount, telegramId]
   );
 }
+
+export async function startFreeTrial(userId: number, days: number) {
+  await pool.query(`UPDATE users SET subscription_expires_at = NOW() + INTERVAL '${days} days' WHERE id = $1`, [userId]);
+}
+
+export async function renewSubscription(userId: number, days: number) {
+  await pool.query(`UPDATE users SET subscription_expires_at = GREATEST(NOW(), COALESCE(subscription_expires_at, NOW())) + INTERVAL '${days} days' WHERE id = $1`, [userId]);
+}

@@ -2,9 +2,12 @@
 import { Scenes } from "telegraf";
 import * as controller from "./controllers/dashboard.controller.ts";
 import type { DashboardContext } from "./types/dashboard.types.ts";
+import { subscriptionGuard } from "../../../core/middlewares/subscription.guard.ts";
 
 export const SCENE_ID = "MANAGER_DASHBOARD_SCENE";
 export const Scene = new Scenes.BaseScene<DashboardContext>(SCENE_ID);
+
+Scene.use(subscriptionGuard);
 
 Scene.enter(controller.handleEnter);
 Scene.action("dash_main", controller.handleMain);

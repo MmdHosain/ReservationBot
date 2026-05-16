@@ -11,6 +11,11 @@ export const handleManagerCommand = async (ctx: MyContext) => {
 
   const user = await service.ensureUserAndGetInfo(telegramId);
   if (user?.onboarded_at) {
+    if (user.subscription_expires_at && new Date(user.subscription_expires_at) < new Date()) {
+      await ctx.reply("❌ اعتبار پنل شما به پایان رسیده است.");
+      await ctx.scene.enter("MANAGER_BILLING_SCENE");
+      return;
+    }
     await ctx.reply(MESSAGES.welcomeBack);
     await ctx.scene.enter("MANAGER_DASHBOARD_SCENE");
   } else {

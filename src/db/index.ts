@@ -13,7 +13,22 @@ CREATE TABLE IF NOT EXISTS users (
   break_start_time TIME,
   break_end_time TIME,
   deposit_amount INTEGER DEFAULT 0,
+  subscription_expires_at TIMESTAMP NULL,
   created_at TIMESTAMP DEFAULT NOW()
+);
+`;
+
+const createTransactionsTableSQL = `
+CREATE TABLE IF NOT EXISTS transactions (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  amount INTEGER NOT NULL,
+  package_days INTEGER NOT NULL,
+  status VARCHAR(20) DEFAULT 'pending',
+  authority VARCHAR(100),
+  ref_id VARCHAR(100),
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
 );
 `;
 
@@ -86,6 +101,9 @@ export async function initDB() {
     await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS break_start_time TIME;").catch(() => {});
     await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS break_end_time TIME;").catch(() => {});
     await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS deposit_amount INTEGER DEFAULT 0;").catch(() => {});
+    await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_expires_at TIMESTAMP NULL;").catch(() => {});
+
+    await pool.query(createTransactionsTableSQL);
 
     await pool.query(createStaffTableSQL);
 
