@@ -1,10 +1,10 @@
 // src/features/customer/salons/views/salons.view.ts
 import type { MyContext } from "../../../../core/types.ts";
 import { SalonMessages } from "./salons.messages.ts";
-import { buildSalonKeyboard, buildBackKeyboard } from "./salons.keyboards.ts";
+import { buildSalonsListKeyboard, buildSalonActionKeyboard, buildBackToSalonsKeyboard } from "./salons.keyboards.ts";
 
-export const showSalons = async (ctx: MyContext, salons: any[]) => {
-  const kb = buildBackKeyboard();
+export const showSalonsList = async (ctx: MyContext, salons: any[]) => {
+  const kb = buildSalonsListKeyboard(salons);
   if (salons.length === 0) {
     if (ctx.callbackQuery) {
       return ctx.editMessageText(SalonMessages.noSalons, kb).catch(() => {});
@@ -13,34 +13,30 @@ export const showSalons = async (ctx: MyContext, salons: any[]) => {
   }
 
   if (ctx.callbackQuery) {
-    await ctx.editMessageText(SalonMessages.header).catch(() => {});
+    await ctx.editMessageText(SalonMessages.header, kb).catch(() => {});
   } else {
-    await ctx.reply(SalonMessages.header);
+    await ctx.reply(SalonMessages.header, kb);
   }
+};
 
-  for (const s of salons) {
-    const salonName = s.salon_name || SalonMessages.unknownUser;
-    const msgText = `🏪 ${salonName}`;
-    await ctx.reply(msgText, buildSalonKeyboard(s.salon_user_id));
+export const showSalonDetails = async (ctx: MyContext, salon: any) => {
+  const salonName = salon.salon_name || SalonMessages.unknownUser;
+  const msgText = SalonMessages.salonDetails(salonName);
+  const kb = buildSalonActionKeyboard(salon.salon_user_id);
+
+  if (ctx.callbackQuery) {
+    await ctx.editMessageText(msgText, kb).catch(() => {});
+  } else {
+    await ctx.reply(msgText, kb);
   }
-
-  await ctx.reply(SalonMessages.backPrompt, kb);
 };
 
 export const showDeleteSuccess = async (ctx: MyContext) => {
-  await ctx.answerCbQuery(SalonMessages.deleteSuccess).catch(() => {});
-  if (ctx.callbackQuery && ctx.callbackQuery.message) {
-    const msg = ctx.callbackQuery.message as any;
-    if (msg.text) {
-      await ctx
-        .editMessageText(msg.text + "\n\n" + SalonMessages.deletedTag)
-        .catch(() => {});
-    }
-  }
+  await ctx.answerCbQuery(SalonMessages.deleteSuccess, { show_alert: true }).catch(() => {});
 };
 
 export const showTypeMessage = async (ctx: MyContext) => {
-  const kb = buildBackKeyboard();
+  const kb = buildBackToSalonsKeyboard();
   if (ctx.callbackQuery) {
     await ctx.editMessageText(SalonMessages.typeMessage, kb).catch(() => {});
   } else {

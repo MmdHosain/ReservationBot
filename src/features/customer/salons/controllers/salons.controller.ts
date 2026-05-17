@@ -7,7 +7,18 @@ export const handleEnter = async (ctx: MyContext) => {
   if (ctx.callbackQuery) await ctx.answerCbQuery().catch(() => {});
   const telegramId = ctx.from!.id;
   const salons = await service.getSalons(telegramId);
-  await view.showSalons(ctx, salons);
+  await view.showSalonsList(ctx, salons);
+};
+
+export const handleSelectSalon = async (ctx: MyContext) => {
+  if (!ctx.match) return;
+  await ctx.answerCbQuery().catch(() => {});
+  const salonUserId = parseInt(ctx.match[1]);
+  const salons = await service.getSalons(ctx.from!.id);
+  const salon = salons.find((s: any) => s.salon_user_id === salonUserId);
+  if (salon) {
+    await view.showSalonDetails(ctx, salon);
+  }
 };
 
 export const handleDelete = async (ctx: MyContext) => {
@@ -15,6 +26,7 @@ export const handleDelete = async (ctx: MyContext) => {
   const salonUserId = parseInt(ctx.match[1]);
   await service.removeSalon(ctx.from!.id, salonUserId);
   await view.showDeleteSuccess(ctx);
+  await handleEnter(ctx);
 };
 
 export const handleReserve = async (ctx: MyContext) => {
