@@ -1,5 +1,5 @@
 // src/features/admin/services/admin.service.ts
-import { pool } from "../../../../db/pool.ts";
+import { pool } from "../../../db/pool.ts";
 
 export const getBotStats = async () => {
   const res = await pool.query(`
