@@ -15,7 +15,20 @@ export const handleDelete = async (ctx: MyContext) => {
   const salonUserId = parseInt(ctx.match[1]);
   await service.removeSalon(ctx.from!.id, salonUserId);
   await view.showDeleteSuccess(ctx);
-  await handleEnter(ctx);
+};
+
+export const handleReserve = async (ctx: MyContext) => {
+  if (!ctx.match) return;
+  await ctx.answerCbQuery().catch(() => {});
+  const salonUserId = parseInt(ctx.match[1]);
+  const salons = await service.getSalons(ctx.from!.id);
+  const salon = salons.find((s: any) => s.salon_user_id === salonUserId);
+  if (salon) {
+    await ctx.scene.enter("CUSTOMER_BOOKING_WIZARD_SCENE", {
+      salonId: salon.salon_user_id,
+      salonName: salon.salon_name || "سالن"
+    });
+  }
 };
 
 export const handleSendMessage = async (ctx: MyContext) => {

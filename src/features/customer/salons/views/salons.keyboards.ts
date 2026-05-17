@@ -2,16 +2,14 @@
 import { Markup } from "telegraf";
 import { SalonMessages } from "./salons.messages.ts";
 
-export const buildSalonsKeyboard = (salons: any[], botUsername: string) => {
-  const buttons = salons.flatMap((s) => [
-    [Markup.button.url(s.salon_name || SalonMessages.unknownUser, `https://ble.ir/${botUsername}?start=${s.salon_telegram_id}`)],
+export const buildSalonKeyboard = (salonUserId: number) => {
+  return Markup.inlineKeyboard([
     [
-      Markup.button.callback(SalonMessages.sendMsgBtn, `send_msg_${s.salon_user_id}`),
-      Markup.button.callback(SalonMessages.deleteBtn, `delete_salon_${s.salon_user_id}`)
+      Markup.button.callback(SalonMessages.sendMsgBtn, `send_msg_${salonUserId}`),
+      Markup.button.callback(SalonMessages.reserveBtn, `reserve_salon_${salonUserId}`),
+      Markup.button.callback(SalonMessages.deleteBtn, `delete_salon_${salonUserId}`)
     ]
   ]);
-  buttons.push([Markup.button.callback(SalonMessages.backBtn, "back_to_customer_dashboard")]);
-  return Markup.inlineKeyboard(buttons);
 };
 
 export const buildBackKeyboard = () => {
