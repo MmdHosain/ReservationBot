@@ -9,7 +9,7 @@ export const buildInboxKeyboard = (messages: InboxMessage[]) => {
   );
   
   buttons.push([Markup.button.callback(InboxMessages.viewArchiveBtn, "view_archive")]);
-  buttons.push([Markup.button.callback(InboxMessages.backToDashBtn, "back_to_dash")]);
+  buttons.push([Markup.button.callback(InboxMessages.backToDashBtn, "back_dash")]);
 
   return Markup.inlineKeyboard(buttons);
 };
@@ -35,10 +35,13 @@ export const buildNoArchivedKeyboard = () => {
   ]);
 };
 
-export const buildBackToInboxKeyboard = () => {
-  return Markup.inlineKeyboard([
-    [Markup.button.callback(InboxMessages.backToInboxBtn, "back_to_inbox")],
-  ]);
+export const buildBackToInboxKeyboard = (showBookBtn: boolean = false) => {
+  const buttons = [];
+  if (showBookBtn) {
+    buttons.push([Markup.button.callback(InboxMessages.bookBtn, "book_for_customer")]);
+  }
+  buttons.push([Markup.button.callback(InboxMessages.backToInboxBtn, "back_to_inbox")]);
+  return Markup.inlineKeyboard(buttons);
 };
 
 export const buildBackToArchiveKeyboard = () => {

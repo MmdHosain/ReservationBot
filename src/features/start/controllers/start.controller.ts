@@ -19,6 +19,10 @@ export const handleStartCommand = async (ctx: MyContext) => {
     }
 
     await service.processStartPayload(telegramId, parts[1]);
+    if (owner) {
+      await ctx.scene.enter("CUSTOMER_SALON_DASHBOARD_SCENE", { salonId: owner.id, salonName: owner.salon_name });
+      return;
+    }
   } else {
     await service.ensureUserExists(telegramId);
   }

@@ -42,6 +42,7 @@ export const handleReadMessage = async (ctx: MyContext) => {
     const msg = await inboxService.processReadMessage(msgId, user.id);
 
     if (msg) {
+      (ctx.scene.session as any).activeInboxMsg = msg;
       await inboxView.showMessage(ctx, msg);
     } else {
       await inboxView.showErrorMessage(ctx);

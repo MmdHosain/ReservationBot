@@ -2,6 +2,7 @@ import { Context, Scenes } from "telegraf";
 
 export interface InboxMessage {
   id: string;
+  customerTelegramId: string | number;
   senderName: string;
   content: string;
   isRead: boolean;

@@ -9,6 +9,7 @@ export const getUnreadMessages = async (salonUserId: number): Promise<InboxMessa
   );
   return res.rows.map((row) => ({
     id: row.id.toString(),
+    customerTelegramId: row.customer_telegram_id,
     senderName: row.sender_name || "Unknown",
     content: row.content,
     isRead: row.is_read,
@@ -23,6 +24,7 @@ export const getArchivedMessages = async (salonUserId: number): Promise<InboxMes
   );
   return res.rows.map((row) => ({
     id: row.id.toString(),
+    customerTelegramId: row.customer_telegram_id,
     senderName: row.sender_name || "Unknown",
     content: row.content,
     isRead: row.is_read,
@@ -47,6 +49,7 @@ export const getMessageById = async (id: string, salonUserId: number): Promise<I
   const row = res.rows[0];
   return {
     id: row.id.toString(),
+    customerTelegramId: row.customer_telegram_id,
     senderName: row.sender_name || "Unknown",
     content: row.content,
     isRead: row.is_read,

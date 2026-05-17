@@ -11,5 +11,6 @@ export const InboxMessages = {
   backToInboxBtn: "⬅️ بازگشت به پیام‌های جدید",
   backToArchiveBtn: "⬅️ بازگشت به لیست آرشیو",
   backToDashBtn: "🔙 بازگشت به داشبورد",
-  viewArchiveBtn: "🗄 مشاهده پیام‌های خوانده‌‌شده"
+  viewArchiveBtn: "🗄 مشاهده پیام‌های خوانده‌‌شده",
+  bookBtn: "📅 ثبت نوبت برای این مشتری"
 };

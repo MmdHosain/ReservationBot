@@ -21,6 +21,11 @@ export async function getUserByTelegramId(telegramId: number) {
   return res.rows[0];
 }
 
+export async function getUserById(id: number) {
+  const res = await pool.query("SELECT * FROM users WHERE id = $1", [id]);
+  return res.rows[0];
+}
+
 export async function markUserOnboarded(userId: number) {
   await pool.query(`UPDATE users SET onboarded_at = NOW() WHERE id = $1`, [
     userId,

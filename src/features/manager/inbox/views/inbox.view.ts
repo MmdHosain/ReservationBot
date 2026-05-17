@@ -32,7 +32,7 @@ export const showMessages = async (ctx: MyContext, messages: InboxMessage[]) => 
 export const showMessage = async (ctx: MyContext, msg: InboxMessage) => {
   await ctx.editMessageText(
     InboxMessages.messageDetail(msg.senderName, msg.content, msg.createdAt),
-    buildBackToInboxKeyboard()
+    buildBackToInboxKeyboard(true)
   ).catch(() => {});
 };
 
