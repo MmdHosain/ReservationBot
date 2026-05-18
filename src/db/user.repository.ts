@@ -1,5 +1,5 @@
 // src/db/user.repository.ts
-import { pool } from "./pool.ts";
+import { pool, withTransaction } from "./pool.ts";
 import { MESSAGES } from "../core/messages.ts";
 
 export async function getOrCreateUser(telegramId: number) {
@@ -50,17 +50,19 @@ export async function updateCalendarType(
 }
 
 export async function deleteUserByTelegramId(telegramId: number) {
-  const userRes = await pool.query(
-    "SELECT id FROM users WHERE telegram_id = $1",
-    [telegramId]
-  );
-  if (userRes.rows.length === 0) {
-    return { success: false, message: MESSAGES.userNotFound };
-  }
-  const userId = userRes.rows[0].id;
-  await pool.query("DELETE FROM services WHERE user_id = $1", [userId]);
-  await pool.query("DELETE FROM users WHERE id = $1", [userId]);
-  return { success: true, message: MESSAGES.userDeleted(telegramId) };
+  return await withTransaction(async (client) => {
+    const userRes = await client.query(
+      "SELECT id FROM users WHERE telegram_id = $1",
+      [telegramId]
+    );
+    if (userRes.rows.length === 0) {
+      return { success: false, message: MESSAGES.userNotFound };
+    }
+    const userId = userRes.rows[0].id;
+    await client.query("DELETE FROM services WHERE user_id = $1", [userId]);
+    await client.query("DELETE FROM users WHERE id = $1", [userId]);
+    return { success: true, message: MESSAGES.userDeleted(telegramId) };
+  });
 }
 
 export async function addCustomerSalon(

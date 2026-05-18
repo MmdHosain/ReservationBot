@@ -76,26 +76,36 @@ export const handleTime = async (ctx: BookingContext) => {
 };
 
 export const handleConfirm = async (ctx: BookingContext) => {
-  await ctx.answerCbQuery().catch(() => {});
   const s = ctx.scene.session;
   
-  if (s.isManager) {
-    await service.createAppointment(s.serviceId!, s.targetCustomerId!, s.targetCustomerName!, s.date!, s.time!);
-    await view.showSuccess(ctx, true);
-    await ctx.telegram.sendMessage(
-      s.targetCustomerId!,
-      BookingMessages.managerBookedForYouNotification(s.salonName, s.serviceName!, s.date!, s.time!)
-    ).catch(() => {});
-    await ctx.scene.enter("MANAGER_INBOX_SCENE");
-  } else {
-    await service.createAppointment(s.serviceId!, ctx.from!.id, ctx.from!.first_name || "مشتری", s.date!, s.time!);
-    await view.showSuccess(ctx, false);
-    const salon = await service.getSalonById(s.salonId);
-    await ctx.telegram.sendMessage(
-      salon.telegram_id, 
-      MESSAGES.ownerNewBookingNotification(ctx.from!.first_name || "مشتری", s.serviceName!, s.date!, s.time!)
-    ).catch(() => {});
-    await ctx.scene.enter("CUSTOMER_DASHBOARD_SCENE");
+  try {
+    if (s.isManager) {
+      await service.createAppointment(s.serviceId!, s.targetCustomerId!, s.targetCustomerName!, s.date!, s.time!);
+      await ctx.answerCbQuery().catch(() => {});
+      await view.showSuccess(ctx, true);
+      await ctx.telegram.sendMessage(
+        s.targetCustomerId!,
+        BookingMessages.managerBookedForYouNotification(s.salonName, s.serviceName!, s.date!, s.time!)
+      ).catch(() => {});
+      await ctx.scene.enter("MANAGER_INBOX_SCENE");
+    } else {
+      await service.createAppointment(s.serviceId!, ctx.from!.id, ctx.from!.first_name || "مشتری", s.date!, s.time!);
+      await ctx.answerCbQuery().catch(() => {});
+      await view.showSuccess(ctx, false);
+      const salon = await service.getSalonById(s.salonId);
+      await ctx.telegram.sendMessage(
+        salon.telegram_id, 
+        MESSAGES.ownerNewBookingNotification(ctx.from!.first_name || "مشتری", s.serviceName!, s.date!, s.time!)
+      ).catch(() => {});
+      await ctx.scene.enter("CUSTOMER_DASHBOARD_SCENE");
+    }
+  } catch (err: any) {
+    if (err.message === "TIME_SLOT_TAKEN") {
+      await ctx.answerCbQuery(MESSAGES.notAvailable, { show_alert: true }).catch(() => {});
+      await showDates(ctx);
+    } else {
+      await ctx.answerCbQuery(MESSAGES.customerBookingError, { show_alert: true }).catch(() => {});
+    }
   }
 };
 
