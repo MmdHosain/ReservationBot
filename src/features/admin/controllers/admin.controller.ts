@@ -4,6 +4,9 @@ import * as service from "../services/admin.service.ts";
 import * as view from "../views/admin.view.ts";
 import config from "../../../core/config.ts";
 import type { MyContext } from "../../../core/types.ts";
+import * as txService from "../../../db/transaction.repository.ts";
+import { renewSubscription } from "../../../db/user.repository.ts";
+import { pool } from "../../../db/pool.ts";
 
 export const handleAdminCommand = async (ctx: MyContext) => {
   await ctx.scene.enter("ADMIN_SCENE");
@@ -45,4 +48,49 @@ export const handleExit = async (ctx: AdminContext) => {
 const showStats = async (ctx: AdminContext, isRefresh: boolean) => {
   const stats = await service.getBotStats();
   await view.showDashboard(ctx, stats, isRefresh);
+};
+
+export const handlePendingReceipts = async (ctx: AdminContext) => {
+  await ctx.answerCbQuery().catch(() => {});
+  const txs = await txService.getPendingTransactions();
+  if (txs.length === 0) {
+    await view.showNoPendingReceipts(ctx);
+    return;
+  }
+  const tx = txs[0];
+  await view.showPendingReceipt(ctx, tx);
+};
+
+export const handleApproveTx = async (ctx: AdminContext) => {
+  await ctx.answerCbQuery("رسید تأیید شد.", { show_alert: true }).catch(() => {});
+  if (!ctx.match) return;
+  const txId = parseInt(ctx.match[1]);
+  const tx = await txService.updateTransactionStatus(txId, 'approved');
+  if (tx) {
+    await renewSubscription(tx.user_id, tx.package_days);
+    const userRes = await pool.query(`SELECT telegram_id FROM users WHERE id = $1`, [tx.user_id]);
+    if (userRes.rows.length > 0) {
+      await ctx.telegram.sendMessage(userRes.rows[0].telegram_id, "✅ رسید پرداختی شما تأیید و اشتراک شما فعال شد.").catch(() => {});
+    }
+  }
+  await handlePendingReceipts(ctx);
+};
+
+export const handleRejectTx = async (ctx: AdminContext) => {
+  await ctx.answerCbQuery("رسید رد شد.", { show_alert: true }).catch(() => {});
+  if (!ctx.match) return;
+  const txId = parseInt(ctx.match[1]);
+  const tx = await txService.updateTransactionStatus(txId, 'rejected');
+  if (tx) {
+    const userRes = await pool.query(`SELECT telegram_id FROM users WHERE id = $1`, [tx.user_id]);
+    if (userRes.rows.length > 0) {
+      await ctx.telegram.sendMessage(userRes.rows[0].telegram_id, "❌ رسید پرداختی شما تأیید نشد. لطفاً مجدداً بررسی کنید.").catch(() => {});
+    }
+  }
+  await handlePendingReceipts(ctx);
+};
+
+export const handleBack = async (ctx: AdminContext) => {
+  await ctx.answerCbQuery().catch(() => {});
+  await showStats(ctx, true);
 };

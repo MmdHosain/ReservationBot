@@ -11,5 +11,11 @@ export const AdminMessages = {
     `✂️ کل خدمات ثبت‌شده: ${svc}`,
   refreshBtn: "🔄 بروزرسانی آمار",
   exitBtn: "❌ خروج از مدیریت",
-  exited: "👋 از پنل مدیریت خارج شدید."
+  exited: "👋 از پنل مدیریت خارج شدید.",
+  pendingReceiptsBtn: "💳 بررسی رسیدهای پرداختی",
+  noPendingReceipts: "هیچ رسید در حال بررسی وجود ندارد.",
+  pendingReceiptDetails: (amount: number, days: number, salonName: string) => `💳 مبلغ: ${amount.toLocaleString('fa-IR')} تومان\n⏳ مدت: ${days} روز\n🏪 سالن: ${salonName}`,
+  approveBtn: "✅ تأیید",
+  rejectBtn: "❌ رد",
+  backBtn: "🔙 بازگشت"
 };

@@ -8,7 +8,10 @@ export const Scene = new Scenes.BaseScene<MyContext>(SCENE_ID);
 
 Scene.enter(controller.handleEnter);
 Scene.action(/buy_pkg_(\d+)_(\d+)/, controller.handleSelectPackage);
-Scene.action(/mock_pay_(\d+)/, controller.handleMockPaymentSuccess);
+Scene.action("cancel_receipt", controller.handleCancelReceipt);
+Scene.on("photo", controller.handleReceiptPhoto);
+Scene.on("text", controller.handleText);
+
 Scene.action("back_dash", async (ctx) => {
   await ctx.answerCbQuery().catch(() => {});
   await ctx.scene.enter("MANAGER_DASHBOARD_SCENE");

@@ -16,9 +16,3 @@ export const buildPackagesKeyboard = (isExpired: boolean) => {
   }
   return Markup.inlineKeyboard(buttons);
 };
-
-export const buildMockPaymentKeyboard = (days: number) => {
-  return Markup.inlineKeyboard([
-    [Markup.button.callback(BillingMessages.payBtn, `mock_pay_${days}`)]
-  ]);
-};
