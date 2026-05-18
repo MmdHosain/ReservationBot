@@ -17,6 +17,8 @@ Scene.action(/view_arc_msg_(.+)/, inboxController.handleViewArchivedMessage);
 Scene.action("view_archive", inboxController.handleViewArchive);
 Scene.action("back_to_inbox", inboxController.handleBackToInbox);
 Scene.action("back_to_dash", inboxController.handleBackToDash);
+Scene.action("reply_to_customer", inboxController.handleReplyToCustomer);
+Scene.on("text", inboxController.handleText);
 Scene.action("book_for_customer", async (ctx) => {
   await ctx.answerCbQuery().catch(() => {});
   const msg = (ctx.scene.session as any).activeInboxMsg;

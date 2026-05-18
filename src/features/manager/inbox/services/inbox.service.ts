@@ -1,6 +1,7 @@
 // src/features/manager/inbox/services/inbox.service.ts
 import * as repository from "../repositories/inbox.repository.ts";
 import type { InboxMessage } from "../types/inbox.types.ts";
+import { pool } from "../../../../db/pool.ts";
 
 export const fetchUnreadInbox = async (salonUserId: number): Promise<InboxMessage[]> => {
   const messages = await repository.getUnreadMessages(salonUserId);
@@ -16,12 +17,11 @@ export const processReadMessage = async (
   id: string,
   salonUserId: number
 ): Promise<InboxMessage | null> => {
-  const messages = await repository.getUnreadMessages(salonUserId);
-  const msg = messages.find((m) => m.id === id);
+  const msg = await repository.getMessageById(id, salonUserId);
 
   if (msg) {
-    const success = await repository.markAsRead(id, salonUserId);
-    if (success) return msg;
+    await repository.markCustomerMessagesAsRead(salonUserId, msg.customerTelegramId);
+    return msg;
   }
   return null;
 };
@@ -31,4 +31,15 @@ export const getMessage = async (
   salonUserId: number
 ): Promise<InboxMessage | null> => {
   return await repository.getMessageById(id, salonUserId);
+};
+
+export const fetchConversation = async (salonUserId: number, customerTelegramId: string | number): Promise<InboxMessage[]> => {
+  return await repository.getConversation(salonUserId, customerTelegramId, 10);
+};
+
+export const saveSalonReply = async (salonUserId: number, customerTelegramId: number | string, salonName: string, content: string) => {
+  await pool.query(
+    `INSERT INTO inbox_messages (salon_user_id, customer_telegram_id, sender_name, content, sender_type, is_read) VALUES ($1, $2, $3, $4, 'salon', true)`,
+    [salonUserId, customerTelegramId, salonName, content]
+  );
 };

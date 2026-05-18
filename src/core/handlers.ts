@@ -17,3 +17,9 @@ botHandlers.command("customer", handleCustomerCommand);
 botHandlers.command("admin", handleAdminCommand);
 botHandlers.command("delete", handleDeleteCommand);
 botHandlers.command("profile", handleProfileCommand);
+
+botHandlers.action(/reply_salon_(\d+)/, async (ctx) => {
+  await ctx.answerCbQuery().catch(() => {});
+  const salonId = parseInt(ctx.match[1]);
+  await ctx.scene.enter("CUSTOMER_SALONS_SCENE", { action: 'reply', salonId });
+});

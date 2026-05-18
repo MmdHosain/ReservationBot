@@ -116,6 +116,7 @@ export async function initDB() {
 
     await pool.query(createCustomerSalonsTableSQL);
     await pool.query(createInboxMessagesTableSQL);
+    await pool.query("ALTER TABLE inbox_messages ADD COLUMN IF NOT EXISTS sender_type VARCHAR(20) DEFAULT 'customer';").catch(() => {});
 
     console.log("📦 Database ready and tables ensured.");
   } catch (err) {

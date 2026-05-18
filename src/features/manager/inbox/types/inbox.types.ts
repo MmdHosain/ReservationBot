@@ -7,6 +7,7 @@ export interface InboxMessage {
   content: string;
   isRead: boolean;
   createdAt: Date;
+  senderType: string;
 }
 
 export interface InboxContext extends Context {

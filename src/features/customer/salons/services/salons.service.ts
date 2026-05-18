@@ -20,7 +20,19 @@ export const sendMessageToSalon = async (
   content: string
 ) => {
   await pool.query(
-    `INSERT INTO inbox_messages (salon_user_id, customer_telegram_id, sender_name, content) VALUES ($1, $2, $3, $4)`,
+    `INSERT INTO inbox_messages (salon_user_id, customer_telegram_id, sender_name, content, sender_type) VALUES ($1, $2, $3, $4, 'customer')`,
     [salonUserId, customerTelegramId, senderName, content]
   );
+};
+
+export const getConversation = async (salonUserId: number, customerTelegramId: number, limit: number = 5) => {
+  const res = await pool.query(
+    `SELECT * FROM inbox_messages WHERE salon_user_id = $1 AND customer_telegram_id = $2 ORDER BY created_at DESC LIMIT $3`,
+    [salonUserId, customerTelegramId, limit]
+  );
+  return res.rows.map(r => ({
+    content: r.content,
+    senderType: r.sender_type || 'customer',
+    createdAt: r.created_at
+  })).reverse();
 };

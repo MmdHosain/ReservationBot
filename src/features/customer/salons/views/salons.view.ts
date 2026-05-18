@@ -35,12 +35,21 @@ export const showDeleteSuccess = async (ctx: MyContext) => {
   await ctx.answerCbQuery(SalonMessages.deleteSuccess, { show_alert: true }).catch(() => {});
 };
 
-export const showTypeMessage = async (ctx: MyContext) => {
+export const showTypeMessage = async (ctx: MyContext, salonName?: string, history?: any[]) => {
+  let text = `✉️ گفتگو با ${salonName || 'سالن'}\n\n`;
+  if (history && history.length > 0) {
+    text += history.map((h: any) => {
+      const prefix = h.senderType === 'salon' ? '🏪 سالن: ' : '🧑 شما: ';
+      return `${prefix}${h.content}`;
+    }).join('\n\n') + '\n\n';
+  }
+  text += SalonMessages.typeMessage;
+
   const kb = buildBackToSalonsKeyboard();
   if (ctx.callbackQuery) {
-    await ctx.editMessageText(SalonMessages.typeMessage, kb).catch(() => {});
+    await ctx.editMessageText(text, kb).catch(() => {});
   } else {
-    await ctx.reply(SalonMessages.typeMessage, kb);
+    await ctx.reply(text, kb);
   }
 };
 

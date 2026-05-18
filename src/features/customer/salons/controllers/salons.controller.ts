@@ -5,6 +5,18 @@ import * as view from "../views/salons.view.ts";
 
 export const handleEnter = async (ctx: MyContext) => {
   if (ctx.callbackQuery) await ctx.answerCbQuery().catch(() => {});
+  
+  const state = ctx.scene.state as any;
+  if (state && state.action === 'reply' && state.salonId) {
+    (ctx.scene.session as any).salonUserIdForMsg = state.salonId;
+    ctx.scene.state = {}; 
+    const salons = await service.getSalons(ctx.from!.id);
+    const salon = salons.find((s: any) => s.salon_user_id === state.salonId);
+    const history = await service.getConversation(state.salonId, ctx.from!.id, 5);
+    await view.showTypeMessage(ctx, salon?.salon_name, history);
+    return;
+  }
+
   const telegramId = ctx.from!.id;
   const salons = await service.getSalons(telegramId);
   await view.showSalonsList(ctx, salons);
@@ -48,7 +60,10 @@ export const handleSendMessage = async (ctx: MyContext) => {
   await ctx.answerCbQuery().catch(() => {});
   const salonUserId = parseInt(ctx.match[1]);
   (ctx.scene.session as any).salonUserIdForMsg = salonUserId;
-  await view.showTypeMessage(ctx);
+  const salons = await service.getSalons(ctx.from!.id);
+  const salon = salons.find((s: any) => s.salon_user_id === salonUserId);
+  const history = await service.getConversation(salonUserId, ctx.from!.id, 5);
+  await view.showTypeMessage(ctx, salon?.salon_name, history);
 };
 
 export const handleText = async (ctx: MyContext) => {

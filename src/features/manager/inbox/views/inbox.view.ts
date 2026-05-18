@@ -6,7 +6,8 @@ import {
   buildBackToInboxKeyboard,
   buildArchivedKeyboard,
   buildNoArchivedKeyboard,
-  buildBackToArchiveKeyboard
+  buildBackToArchiveKeyboard,
+  buildReplyPromptKeyboard
 } from "./inbox.keyboards.ts";
 import type { InboxMessage } from "../types/inbox.types.ts";
 import type { MyContext } from "../../../../core/types.ts";
@@ -29,9 +30,18 @@ export const showMessages = async (ctx: MyContext, messages: InboxMessage[]) => 
   }
 };
 
-export const showMessage = async (ctx: MyContext, msg: InboxMessage) => {
+export const showMessageWithConversation = async (ctx: MyContext, messages: InboxMessage[], customerName: string) => {
+  const history = messages.map(m => {
+    const time = new Intl.DateTimeFormat('fa-IR', { hour: '2-digit', minute: '2-digit' }).format(m.createdAt);
+    if (m.senderType === 'salon') {
+      return `🏪 سالن (${time}):\n${m.content}\n`;
+    } else {
+      return `🧑 ${customerName} (${time}):\n${m.content}\n`;
+    }
+  }).join("\n");
+
   await ctx.editMessageText(
-    InboxMessages.messageDetail(msg.senderName, msg.content, msg.createdAt),
+    InboxMessages.conversationDetail(customerName, history),
     buildBackToInboxKeyboard(true)
   ).catch(() => {});
 };
@@ -54,9 +64,18 @@ export const showArchivedMessages = async (ctx: MyContext, messages: InboxMessag
   }
 };
 
-export const showArchivedMessageDetail = async (ctx: MyContext, msg: InboxMessage) => {
+export const showArchivedMessageWithConversation = async (ctx: MyContext, messages: InboxMessage[], customerName: string) => {
+  const history = messages.map(m => {
+    const time = new Intl.DateTimeFormat('fa-IR', { hour: '2-digit', minute: '2-digit' }).format(m.createdAt);
+    if (m.senderType === 'salon') {
+      return `🏪 سالن (${time}):\n${m.content}\n`;
+    } else {
+      return `🧑 ${customerName} (${time}):\n${m.content}\n`;
+    }
+  }).join("\n");
+
   await ctx.editMessageText(
-    InboxMessages.messageDetail(msg.senderName, msg.content, msg.createdAt),
+    InboxMessages.conversationDetail(customerName, history),
     buildBackToArchiveKeyboard()
   ).catch(() => {});
 };
@@ -73,4 +92,17 @@ export const showErrorMessage = async (ctx: MyContext) => {
 
 export const showNotManager = async (ctx: MyContext) => {
   await ctx.reply(InboxMessages.notManager);
+};
+
+export const showReplyPrompt = async (ctx: MyContext, name: string) => {
+  const kb = buildReplyPromptKeyboard();
+  if (ctx.callbackQuery) {
+    await ctx.editMessageText(InboxMessages.typeReplyPrompt(name), kb).catch(() => {});
+  } else {
+    await ctx.reply(InboxMessages.typeReplyPrompt(name), kb);
+  }
+};
+
+export const showReplySuccess = async (ctx: MyContext) => {
+  await ctx.reply(InboxMessages.replySentSuccess);
 };

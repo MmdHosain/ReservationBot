@@ -37,6 +37,7 @@ export const buildNoArchivedKeyboard = () => {
 
 export const buildBackToInboxKeyboard = (showBookBtn: boolean = false) => {
   const buttons = [];
+  buttons.push([Markup.button.callback(InboxMessages.replyBtn, "reply_to_customer")]);
   if (showBookBtn) {
     buttons.push([Markup.button.callback(InboxMessages.bookBtn, "book_for_customer")]);
   }
@@ -46,6 +47,13 @@ export const buildBackToInboxKeyboard = (showBookBtn: boolean = false) => {
 
 export const buildBackToArchiveKeyboard = () => {
   return Markup.inlineKeyboard([
+    [Markup.button.callback(InboxMessages.replyBtn, "reply_to_customer")],
     [Markup.button.callback(InboxMessages.backToArchiveBtn, "view_archive")],
+  ]);
+};
+
+export const buildReplyPromptKeyboard = () => {
+  return Markup.inlineKeyboard([
+    [Markup.button.callback(InboxMessages.cancelBtn, "back_to_inbox")]
   ]);
 };
