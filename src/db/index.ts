@@ -41,6 +41,15 @@ CREATE TABLE IF NOT EXISTS staff (
 );
 `;
 
+const createServiceCategoriesTableSQL = `
+CREATE TABLE IF NOT EXISTS service_categories (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+`;
+
 const createServicesTableSQL = `
 CREATE TABLE IF NOT EXISTS services (
   id SERIAL PRIMARY KEY,
@@ -107,8 +116,12 @@ export async function initDB() {
     await pool.query("ALTER TABLE transactions ADD COLUMN IF NOT EXISTS receipt_photo_id TEXT;").catch(() => {});
 
     await pool.query(createStaffTableSQL);
+    
+    await pool.query(createServiceCategoriesTableSQL);
 
     await pool.query(createServicesTableSQL);
+    await pool.query("ALTER TABLE services ADD COLUMN IF NOT EXISTS category_id INTEGER REFERENCES service_categories(id) ON DELETE SET NULL;").catch(() => {});
+
     await pool.query(createAppointmentsTableSQL);
     await pool.query("ALTER TABLE appointments ADD COLUMN IF NOT EXISTS staff_id INTEGER REFERENCES staff(id) ON DELETE SET NULL;").catch(() => {});
     await pool.query("ALTER TABLE appointments ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'confirmed';").catch(() => {});

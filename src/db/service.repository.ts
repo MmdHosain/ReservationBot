@@ -7,15 +7,16 @@ export async function saveService(
     name: string;
     duration: number;
     days: string;
+    categoryId?: number | null;
   }
 ) {
   return pool.query(
     `
-    INSERT INTO services (user_id, name, duration, days)
-    VALUES ($1, $2, $3, $4)
+    INSERT INTO services (user_id, name, duration, days, category_id)
+    VALUES ($1, $2, $3, $4, $5)
     RETURNING *;
     `,
-[userId, service.name, service.duration, service.days]
+    [userId, service.name, service.duration, service.days, service.categoryId || null]
   );
 }
 
@@ -43,7 +44,7 @@ export async function deleteService(id: number) {
   return pool.query(`DELETE FROM services WHERE id = $1`,[id]);
 }
 
-export async function updateService(id: number, service: Partial<{ name: string; duration: number; days: string }>) {
+export async function updateService(id: number, service: Partial<{ name: string; duration: number; days: string; categoryId: number | null }>) {
   const updates =[];
   const values =[];
   let idx = 1;
@@ -59,6 +60,10 @@ export async function updateService(id: number, service: Partial<{ name: string;
   if (service.days !== undefined) {
     updates.push(`days = $${idx++}`);
     values.push(service.days);
+  }
+  if (service.categoryId !== undefined) {
+    updates.push(`category_id = $${idx++}`);
+    values.push(service.categoryId);
   }
 
   if (updates.length === 0) return;

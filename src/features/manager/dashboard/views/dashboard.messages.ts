@@ -7,6 +7,7 @@ export const DashboardMessages = {
   inboxBtn: "📥 پیام‌ها",
   toolsMenuBtn: "🔧 تنظیمات و ابزارها",
   toolsMenuTitle: "🔧 *تنظیمات و ابزارها*\n\nلطفا یک گزینه را انتخاب کنید:",
+  categoriesBtn: "📂 مدیریت دسته‌بندی‌ها",
   billingBtn: "💳 مدیریت اشتراک",
   staffBtn: "👥 مدیریت پرسنل",
   settingsBtn: "⚙️ تنظیمات کاری",

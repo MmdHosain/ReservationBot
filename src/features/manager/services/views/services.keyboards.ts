@@ -7,7 +7,10 @@ export const buildMenuKeyboard = () => Markup.inlineKeyboard([
     Markup.button.callback(ServicesMessages.editNameBtn, "edit_name"),
     Markup.button.callback(ServicesMessages.editDurationBtn, "edit_duration"),
   ],
-  [Markup.button.callback(ServicesMessages.editDaysBtn, "edit_days")],
+  [
+    Markup.button.callback(ServicesMessages.editCategoryBtn, "edit_category"),
+    Markup.button.callback(ServicesMessages.editDaysBtn, "edit_days"),
+  ],
   [Markup.button.callback(ServicesMessages.deleteServiceBtn, "delete_service")],
   [Markup.button.callback(ServicesMessages.backDashBtn, "back_dash")],
 ]);
@@ -15,6 +18,13 @@ export const buildMenuKeyboard = () => Markup.inlineKeyboard([
 export const buildBackToMenuKeyboard = () => Markup.inlineKeyboard([
   [Markup.button.callback(ServicesMessages.menuBtn, "menu")]
 ]);
+
+export const buildCategoryKeyboard = (categories: any[]) => {
+  const buttons = categories.map(c => [Markup.button.callback(`📂 ${c.name}`, `set_cat_${c.id}`)]);
+  buttons.push([Markup.button.callback(ServicesMessages.noCategoryBtn, "set_cat_none")]);
+  buttons.push([Markup.button.callback(ServicesMessages.menuBtn, "menu")]);
+  return Markup.inlineKeyboard(buttons);
+};
 
 export const buildDurationKeyboard = () => Markup.inlineKeyboard([
   [

@@ -5,15 +5,30 @@ import { OnboardingMessages } from "../views/onboarding.messages.ts";
 import type { OnboardingContext } from "../types/onboarding.types.ts";
 
 export const handleEnter = async (ctx: OnboardingContext) => {
-  ctx.scene.session.draft = { serviceName: undefined, duration: undefined, daysOfWeek: undefined };
+  ctx.scene.session.draft = { serviceName: undefined, duration: undefined, daysOfWeek: undefined, categoryId: undefined };
   ctx.scene.session.step = undefined;
   const status = await service.checkUserStatus(ctx.from!.id);
   await view.showWelcome(ctx, status.isNewUser);
 };
 
 export const handleStart = async (ctx: OnboardingContext) => {
-  await ctx.answerCbQuery();
-  ctx.scene.session.draft = { serviceName: undefined, duration: undefined, daysOfWeek: undefined };
+  await ctx.answerCbQuery().catch(() => {});
+  ctx.scene.session.draft = { serviceName: undefined, duration: undefined, daysOfWeek: undefined, categoryId: undefined };
+  
+  const status = await service.checkUserStatus(ctx.from!.id);
+  const categories = await service.getUserCategories(status.userId);
+  
+  if (categories.length > 0) {
+    await view.showAskCategory(ctx, categories);
+  } else {
+    await view.showAskServiceName(ctx);
+  }
+};
+
+export const handleCategorySelection = async (ctx: OnboardingContext) => {
+  await ctx.answerCbQuery().catch(() => {});
+  const val = ctx.match[1];
+  ctx.scene.session.draft.categoryId = val === "none" ? null : parseInt(val);
   await view.showAskServiceName(ctx);
 };
 
@@ -26,13 +41,13 @@ export const handleServiceName = async (ctx: OnboardingContext) => {
 };
 
 export const handleDuration = async (ctx: OnboardingContext, duration: number) => {
-  await ctx.answerCbQuery();
+  await ctx.answerCbQuery().catch(() => {});
   ctx.scene.session.draft.duration = duration;
   await view.showAskDays(ctx, ctx.scene.session.draft.daysOfWeek || []);
 };
 
 export const handleDaySelection = async (ctx: OnboardingContext, day: string) => {
-  await ctx.answerCbQuery();
+  await ctx.answerCbQuery().catch(() => {});
   const draft = ctx.scene.session.draft;
   if (!draft.daysOfWeek) draft.daysOfWeek = [];
   const idx = draft.daysOfWeek.indexOf(day);
@@ -49,9 +64,9 @@ export const handleConfirmDays = async (ctx: OnboardingContext) => {
   if (!draft.serviceName || !draft.duration) {
     return view.showAlert(ctx, OnboardingMessages.pleaseProvideNameAndDuration);
   }
-  await ctx.answerCbQuery();
+  await ctx.answerCbQuery().catch(() => {});
   const status = await service.checkUserStatus(ctx.from!.id);
-  await service.createService(status.userId, draft.serviceName, draft.duration, draft.daysOfWeek);
+  await service.createService(status.userId, draft.serviceName, draft.duration, draft.daysOfWeek, draft.categoryId);
   
   await view.showConfirmation(ctx, draft.serviceName, draft.duration, draft.daysOfWeek, !status.hasSalonName);
   

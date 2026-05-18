@@ -13,6 +13,7 @@ export const handleEnter = async (ctx: BookingContext) => {
   ctx.scene.session.targetCustomerId = state.targetCustomerId;
   ctx.scene.session.targetCustomerName = state.targetCustomerName;
   ctx.scene.session.page = 0;
+  ctx.scene.session.viewingCategoryId = 'root';
   
   const services = await service.getSalonServices(state.salonId);
   if (services.length === 0) {
@@ -20,7 +21,39 @@ export const handleEnter = async (ctx: BookingContext) => {
     if (ctx.scene.session.isManager) return ctx.scene.enter("MANAGER_INBOX_SCENE");
     return ctx.scene.enter("CUSTOMER_SALON_DASHBOARD_SCENE", state);
   }
-  await view.showServices(ctx, services);
+  
+  await showCategoriesOrServices(ctx);
+};
+
+export const showCategoriesOrServices = async (ctx: BookingContext) => {
+  const s = ctx.scene.session;
+  const services = await service.getSalonServices(s.salonId);
+  const allCategories = await service.getSalonCategories(s.salonId);
+
+  if (s.viewingCategoryId === 'root') {
+    const populatedCatIds = new Set(services.filter(svc => svc.category_id).map(svc => svc.category_id));
+    const populatedCategories = allCategories.filter(cat => populatedCatIds.has(cat.id));
+    const uncategorizedServices = services.filter(svc => !svc.category_id);
+
+    await view.showRootServices(ctx, populatedCategories, uncategorizedServices);
+  } else {
+    const catId = s.viewingCategoryId as number;
+    const cat = allCategories.find(c => c.id === catId);
+    const catServices = services.filter(svc => svc.category_id === catId);
+    await view.showCategoryServices(ctx, cat?.name || "دسته‌بندی", catServices);
+  }
+};
+
+export const handleCategory = async (ctx: BookingContext) => {
+  await ctx.answerCbQuery().catch(() => {});
+  ctx.scene.session.viewingCategoryId = parseInt(ctx.match[1]);
+  await showCategoriesOrServices(ctx);
+};
+
+export const handleBackToCategories = async (ctx: BookingContext) => {
+  await ctx.answerCbQuery().catch(() => {});
+  ctx.scene.session.viewingCategoryId = 'root';
+  await showCategoriesOrServices(ctx);
 };
 
 export const handleService = async (ctx: BookingContext) => {

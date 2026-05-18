@@ -1,9 +1,14 @@
 import { getServicesByUserId, getServiceById as getSvc } from "../../../../db/service.repository.ts";
 import { getUserById } from "../../../../db/user.repository.ts";
 import { getAppointmentsByDate as getAppts, createAppointment as createAppt } from "../../../../db/appointment.repository.ts";
+import { getCategoriesByUserId } from "../../../../db/category.repository.ts";
 
 export const getSalonServices = async (salonId: number) => {
   return await getServicesByUserId(salonId);
+};
+
+export const getSalonCategories = async (salonId: number) => {
+  return await getCategoriesByUserId(salonId);
 };
 
 export const getServiceById = async (id: number) => {

@@ -6,6 +6,7 @@ export interface BookingSession extends Scenes.SceneSessionData {
   isManager?: boolean;
   targetCustomerId?: number;
   targetCustomerName?: string;
+  viewingCategoryId?: number | 'root';
   serviceId?: number;
   serviceName?: string;
   duration?: number;

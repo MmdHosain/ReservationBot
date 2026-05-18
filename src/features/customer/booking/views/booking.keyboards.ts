@@ -1,8 +1,21 @@
 import { Markup } from "telegraf";
 import { BookingMessages } from "./booking.messages.ts";
 
-export const buildServicesKeyboard = (services: any[]) => {
-  const buttons = services.map(s => [Markup.button.callback(`${s.name} (${s.duration} دقیقه)`, `select_svc_${s.id}`)]);
+export const buildRootServicesKeyboard = (categories: any[], uncategorizedServices: any[]) => {
+  const buttons = [];
+  categories.forEach(c => {
+    buttons.push([Markup.button.callback(`📁 ${c.name}`, `select_cat_${c.id}`)]);
+  });
+  uncategorizedServices.forEach(s => {
+    buttons.push([Markup.button.callback(`✂️ ${s.name} (${s.duration} دقیقه)`, `select_svc_${s.id}`)]);
+  });
+  buttons.push([Markup.button.callback(BookingMessages.cancelBtn, "cancel_booking")]);
+  return Markup.inlineKeyboard(buttons);
+};
+
+export const buildCategoryServicesKeyboard = (services: any[]) => {
+  const buttons = services.map(s => [Markup.button.callback(`✂️ ${s.name} (${s.duration} دقیقه)`, `select_svc_${s.id}`)]);
+  buttons.push([Markup.button.callback(BookingMessages.backToCategoriesBtn, "back_to_cats")]);
   buttons.push([Markup.button.callback(BookingMessages.cancelBtn, "cancel_booking")]);
   return Markup.inlineKeyboard(buttons);
 };

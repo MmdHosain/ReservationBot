@@ -6,6 +6,12 @@ export const buildStartKeyboard = () => Markup.inlineKeyboard([
   [Markup.button.callback(OnboardingMessages.startBtn, "start_service")],
 ]);
 
+export const buildCategoryKeyboard = (categories: any[]) => {
+  const buttons = categories.map(c => [Markup.button.callback(`📂 ${c.name}`, `sel_cat_${c.id}`)]);
+  buttons.push([Markup.button.callback(OnboardingMessages.noCategoryBtn, "sel_cat_none")]);
+  return Markup.inlineKeyboard(buttons);
+};
+
 export const buildDurationKeyboard = () => Markup.inlineKeyboard([
   [
     Markup.button.callback(OnboardingMessages.minutes30, "dur_30"),

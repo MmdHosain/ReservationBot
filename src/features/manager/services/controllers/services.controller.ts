@@ -17,11 +17,18 @@ export const handleMenu = async (ctx: ServicesContext) => {
     await view.showError(ctx, ServicesMessages.serviceNotFound);
     return ctx.scene.enter("MANAGER_DASHBOARD_SCENE");
   }
-  await view.showMenu(ctx, svc.name, svc.duration, JSON.parse(svc.days));
+  
+  let catName = "ندارد";
+  if (svc.category_id) {
+    const cat = await service.getCategory(svc.category_id);
+    if (cat) catName = cat.name;
+  }
+  
+  await view.showMenu(ctx, svc.name, svc.duration, JSON.parse(svc.days), catName);
 };
 
 export const askName = async (ctx: ServicesContext) => {
-  await ctx.answerCbQuery();
+  await ctx.answerCbQuery().catch(() => {});
   ctx.scene.session.action = "name";
   await view.showAskName(ctx);
 };
@@ -40,13 +47,34 @@ export const handleText = async (ctx: ServicesContext) => {
   }
 };
 
+export const askCategory = async (ctx: ServicesContext) => {
+  await ctx.answerCbQuery().catch(() => {});
+  const user = await service.getUser(ctx.from!.id);
+  const categories = await service.getUserCategories(user.id);
+  if (categories.length === 0) {
+    return view.showError(ctx, "شما هیچ دسته‌بندی ندارید. ابتدا از بخش مدیریت دسته‌بندی‌ها، یک دسته ایجاد کنید.");
+  }
+  await view.showAskCategory(ctx, categories);
+};
+
+export const handleCategory = async (ctx: ServicesContext) => {
+  await ctx.answerCbQuery().catch(() => {});
+  const catId = ctx.match[1] === "none" ? null : parseInt(ctx.match[1]);
+  if (ctx.scene.session.serviceId) {
+    await service.updateServiceData(ctx.scene.session.serviceId, { categoryId: catId });
+  }
+  await view.showSuccess(ctx, ServicesMessages.categoryUpdated);
+  ctx.scene.session.action = "menu";
+  await handleMenu(ctx);
+};
+
 export const askDuration = async (ctx: ServicesContext) => {
-  await ctx.answerCbQuery();
+  await ctx.answerCbQuery().catch(() => {});
   await view.showAskDuration(ctx);
 };
 
 export const handleDuration = async (ctx: ServicesContext) => {
-  await ctx.answerCbQuery();
+  await ctx.answerCbQuery().catch(() => {});
   const duration = parseInt(ctx.match[1]);
   if (ctx.scene.session.serviceId) {
     await service.updateServiceData(ctx.scene.session.serviceId, { duration });
@@ -57,7 +85,7 @@ export const handleDuration = async (ctx: ServicesContext) => {
 };
 
 export const askDays = async (ctx: ServicesContext) => {
-  await ctx.answerCbQuery();
+  await ctx.answerCbQuery().catch(() => {});
   if (!ctx.scene.session.serviceId) return;
   const svc = await service.getService(ctx.scene.session.serviceId);
   ctx.scene.session.draftDays = JSON.parse(svc.days);
@@ -65,7 +93,7 @@ export const askDays = async (ctx: ServicesContext) => {
 };
 
 export const handleDay = async (ctx: ServicesContext) => {
-  await ctx.answerCbQuery();
+  await ctx.answerCbQuery().catch(() => {});
   const day = ctx.match[1];
   let draft = ctx.scene.session.draftDays || [];
   const idx = draft.indexOf(day);
@@ -76,7 +104,7 @@ export const handleDay = async (ctx: ServicesContext) => {
 };
 
 export const saveDays = async (ctx: ServicesContext) => {
-  await ctx.answerCbQuery();
+  await ctx.answerCbQuery().catch(() => {});
   const draft = ctx.scene.session.draftDays;
   if (!draft || draft.length === 0) return view.showError(ctx, ServicesMessages.pleaseSelectAtLeastOneDay);
   if (ctx.scene.session.serviceId) {
@@ -88,7 +116,7 @@ export const saveDays = async (ctx: ServicesContext) => {
 };
 
 export const deleteSvc = async (ctx: ServicesContext) => {
-  await ctx.answerCbQuery();
+  await ctx.answerCbQuery().catch(() => {});
   if (ctx.scene.session.serviceId) {
     await service.removeService(ctx.scene.session.serviceId);
   }

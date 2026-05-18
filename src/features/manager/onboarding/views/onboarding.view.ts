@@ -1,6 +1,6 @@
 // src/features/manager/onboarding/views/onboarding.view.ts
 import { OnboardingMessages } from "./onboarding.messages.ts";
-import { buildStartKeyboard, buildDurationKeyboard, buildDaysKeyboard, buildGoToDashboardKeyboard } from "./onboarding.keyboards.ts";
+import { buildStartKeyboard, buildCategoryKeyboard, buildDurationKeyboard, buildDaysKeyboard, buildGoToDashboardKeyboard } from "./onboarding.keyboards.ts";
 import type { OnboardingContext } from "../types/onboarding.types.ts";
 
 export const showWelcome = async (ctx: OnboardingContext, isNewUser: boolean) => {
@@ -9,9 +9,16 @@ export const showWelcome = async (ctx: OnboardingContext, isNewUser: boolean) =>
     if (ctx.callbackQuery) await ctx.editMessageText(OnboardingMessages.welcome, kb);
     else await ctx.reply(OnboardingMessages.welcome, kb);
   } else {
-    if (ctx.callbackQuery) await ctx.editMessageText(OnboardingMessages.addNewServicePrompt);
-    else await ctx.reply(OnboardingMessages.addNewServicePrompt);
+    const kb = buildStartKeyboard();
+    if (ctx.callbackQuery) await ctx.editMessageText(OnboardingMessages.addNewServicePrompt, kb);
+    else await ctx.reply(OnboardingMessages.addNewServicePrompt, kb);
   }
+};
+
+export const showAskCategory = async (ctx: OnboardingContext, categories: any[]) => {
+  const kb = buildCategoryKeyboard(categories);
+  if (ctx.callbackQuery) await ctx.editMessageText(OnboardingMessages.askCategory, kb);
+  else await ctx.reply(OnboardingMessages.askCategory, kb);
 };
 
 export const showAskServiceName = async (ctx: OnboardingContext) => {

@@ -1,7 +1,8 @@
 import type { BookingContext } from "../types/booking.types.ts";
 import { BookingMessages } from "./booking.messages.ts";
 import {
-  buildServicesKeyboard,
+  buildRootServicesKeyboard,
+  buildCategoryServicesKeyboard,
   buildDatesKeyboard,
   buildTimesKeyboard,
   buildConfirmKeyboard
@@ -11,9 +12,16 @@ export const showNoServices = async (ctx: BookingContext) => {
   await ctx.reply(BookingMessages.noServices);
 };
 
-export const showServices = async (ctx: BookingContext, services: any[]) => {
-  const msg = BookingMessages.selectService;
-  const kb = buildServicesKeyboard(services);
+export const showRootServices = async (ctx: BookingContext, categories: any[], uncategorizedServices: any[]) => {
+  const msg = BookingMessages.selectCategoryOrService;
+  const kb = buildRootServicesKeyboard(categories, uncategorizedServices);
+  if (ctx.callbackQuery) await ctx.editMessageText(msg, kb).catch(() => {});
+  else await ctx.reply(msg, kb);
+};
+
+export const showCategoryServices = async (ctx: BookingContext, catName: string, services: any[]) => {
+  const msg = BookingMessages.servicesInCategory(catName);
+  const kb = buildCategoryServicesKeyboard(services);
   if (ctx.callbackQuery) await ctx.editMessageText(msg, kb).catch(() => {});
   else await ctx.reply(msg, kb);
 };
