@@ -3,6 +3,7 @@ import { Markup } from "telegraf";
 import { DashboardMessages } from "./dashboard.messages.ts";
 
 export const buildMainKeyboard = () => Markup.inlineKeyboard([
+  [Markup.button.callback(DashboardMessages.shareLinkBtn, "dash_share_link")],
   [Markup.button.callback(DashboardMessages.appointmentsBtn, "dash_appointments")],
   [Markup.button.callback(DashboardMessages.servicesBtn, "dash_services")],
   [Markup.button.callback(DashboardMessages.inboxBtn, "dash_inbox")],

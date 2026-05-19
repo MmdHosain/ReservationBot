@@ -4,9 +4,8 @@ import { buildMainKeyboard, buildBackKeyboard, buildServicesKeyboard, buildTools
 import type { DashboardContext } from "../types/dashboard.types.ts";
 import type { MyContext } from "../../../../core/types.ts";
 
-export const showDashboard = async (ctx: DashboardContext | MyContext, salonName: string, botUsername: string, userId: number) => {
-  const ownerLink = `https://ble.ir/${botUsername}?start=${userId}`;
-  const message = DashboardMessages.welcome(salonName) + DashboardMessages.ownerLink(ownerLink);
+export const showDashboard = async (ctx: DashboardContext | MyContext, salonName: string) => {
+  const message = DashboardMessages.welcome(salonName);
   const keyboard = buildMainKeyboard();
 
   if (ctx.callbackQuery) {

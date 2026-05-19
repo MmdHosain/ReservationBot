@@ -26,8 +26,7 @@ export const handleManagerCommand = async (ctx: MyContext) => {
 export const handleEnter = async (ctx: DashboardContext) => {
   const user = await service.getUserInfo(ctx.from!.id);
   const salonName = user?.salon_name || "سالن";
-  const botUsername = ctx.botInfo?.username || "bot";
-  await view.showDashboard(ctx, salonName, botUsername, ctx.from!.id);
+  await view.showDashboard(ctx, salonName);
 };
 
 export const handleMain = async (ctx: DashboardContext) => {
