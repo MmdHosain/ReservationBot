@@ -67,9 +67,9 @@ export async function deleteUserByTelegramId(telegramId: number) {
 
 export async function addCustomerSalon(
   customerTelegramId: number,
-  salonTelegramId: number
+  salonUserId: number
 ) {
-  const salonUser = await getUserByTelegramId(salonTelegramId);
+  const salonUser = await getUserById(salonUserId);
   if (!salonUser) return;
   await pool.query(
     `

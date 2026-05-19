@@ -1,12 +1,12 @@
-// src/features/core/start/services/start.service.ts
+// src/features/start/services/start.service.ts
 import {
   getOrCreateUser,
   addCustomerSalon,
-  getUserByTelegramId,
+  getUserById,
 } from "../../../db/user.repository.ts";
 
-export const getSalonOwner = async (telegramId: number) => {
-  return await getUserByTelegramId(telegramId);
+export const getSalonOwner = async (userId: number) => {
+  return await getUserById(userId);
 };
 
 export const processStartPayload = async (
