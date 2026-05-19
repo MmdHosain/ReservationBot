@@ -18,7 +18,7 @@ Scene.action("go_to_dashboard", async (ctx) => {
 });
 Scene.on("text", async (ctx) => {
   const step = ctx.scene.session.step;
-  const draft = ctx.scene.session.draft;
   if (step === "ask_salon_name") await controller.handleSalonName(ctx);
-  else if (draft && draft.categoryId !== undefined && !draft.serviceName) await controller.handleServiceName(ctx);
+  else if (step === "ask_service_name") await controller.handleServiceName(ctx);
+  else if (step === "ask_duration") await controller.handleDurationText(ctx);
 });

@@ -19,8 +19,10 @@ export const handleStart = async (ctx: OnboardingContext) => {
   const categories = await service.getUserCategories(status.userId);
   
   if (categories.length > 0) {
+    ctx.scene.session.step = "ask_category";
     await view.showAskCategory(ctx, categories);
   } else {
+    ctx.scene.session.step = "ask_service_name";
     await view.showAskServiceName(ctx);
   }
 };
@@ -29,6 +31,7 @@ export const handleCategorySelection = async (ctx: OnboardingContext) => {
   await ctx.answerCbQuery().catch(() => {});
   const val = ctx.match[1];
   ctx.scene.session.draft.categoryId = val === "none" ? null : parseInt(val);
+  ctx.scene.session.step = "ask_service_name";
   await view.showAskServiceName(ctx);
 };
 
@@ -37,12 +40,24 @@ export const handleServiceName = async (ctx: OnboardingContext) => {
   const serviceName = ctx.message.text.trim();
   if (!serviceName) return view.showAskServiceName(ctx);
   ctx.scene.session.draft.serviceName = serviceName;
+  ctx.scene.session.step = "ask_duration";
   await view.showAskDuration(ctx);
 };
 
+export const handleDurationText = async (ctx: OnboardingContext) => {
+  if (!ctx.message || !("text" in ctx.message) || !ctx.message.text) return;
+  const duration = parseInt(ctx.message.text.trim());
+  if (isNaN(duration) || duration <= 0) {
+    await view.showAlert(ctx, "لطفاً یک عدد معتبر برای مدت زمان وارد کنید.");
+    return;
+  }
+  await handleDuration(ctx, duration);
+};
+
 export const handleDuration = async (ctx: OnboardingContext, duration: number) => {
-  await ctx.answerCbQuery().catch(() => {});
+  if (ctx.callbackQuery) await ctx.answerCbQuery().catch(() => {});
   ctx.scene.session.draft.duration = duration;
+  ctx.scene.session.step = "ask_days";
   await view.showAskDays(ctx, ctx.scene.session.draft.daysOfWeek || []);
 };
 
