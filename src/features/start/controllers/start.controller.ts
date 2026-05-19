@@ -1,6 +1,7 @@
-// src/features/core/start/controllers/start.controller.ts
+// src/features/start/controllers/start.controller.ts
 import type { MyContext } from "../../../core/types.ts";
 import * as service from "../services/start.service.ts";
+import { handleManagerCommand } from "../../manager/dashboard/controllers/dashboard.controller.ts";
 
 export const handleStartCommand = async (ctx: MyContext) => {
   const telegramId = ctx.from?.id;
@@ -23,9 +24,7 @@ export const handleStartCommand = async (ctx: MyContext) => {
       await ctx.scene.enter("CUSTOMER_SALON_DASHBOARD_SCENE", { salonId: owner.id, salonName: owner.salon_name });
       return;
     }
-  } else {
-    await service.ensureUserExists(telegramId);
   }
 
-  await ctx.scene.enter("CUSTOMER_DASHBOARD_SCENE");
+  await handleManagerCommand(ctx);
 };
