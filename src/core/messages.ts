@@ -1,5 +1,6 @@
-// src/messages.ts
+// src/core/messages.ts
 export const MESSAGES = {
+  globalError: "⚠️ متأسفانه خطایی در سیستم رخ داد. لطفا دقایقی دیگر تلاش کنید.",
   welcomeBack: "خوش برگشتید",
   deletingUser: "⏳ در حال حذف کاربر...",
   userNotFound: "کاربر یافت نشد.",
