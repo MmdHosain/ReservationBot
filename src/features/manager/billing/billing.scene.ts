@@ -8,9 +8,9 @@ export const Scene = new Scenes.BaseScene<MyContext>(SCENE_ID);
 
 Scene.enter(controller.handleEnter);
 Scene.action(/buy_pkg_(\d+)_(\d+)/, controller.handleSelectPackage);
-Scene.action("cancel_receipt", controller.handleCancelReceipt);
-Scene.on("photo", controller.handleReceiptPhoto);
-Scene.on("text", controller.handleText);
+
+Scene.on("pre_checkout_query", controller.handlePreCheckout);
+Scene.on("successful_payment", controller.handleSuccessfulPayment);
 
 Scene.action("back_dash", async (ctx) => {
   await ctx.answerCbQuery().catch(() => {});

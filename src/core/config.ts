@@ -3,6 +3,7 @@ import "dotenv/config";
 const config = {
   token: process.env.BOT_TOKEN || "",
   adminPassword: process.env.ADMIN_PASSWORD || "admin123",
+  providerToken: process.env.PROVIDER_TOKEN || "WALLET-W1zK7g7P6uMYTlTO",
   db: {
     host: process.env.DB_HOST || "localhost",
     port: parseInt(process.env.DB_PORT || "5432"),
