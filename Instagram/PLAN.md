@@ -13,13 +13,15 @@ To keep the architecture clean and unified, the project acts as a single monolit
 - [x] Create the Webhook server skeleton (`Instagram/src/index.ts`).
 - [x] Create standalone `.env.example` management for shared credentials.
 
-## Phase 2: State & Session Management (Next Steps)
-- [ ] Implement an in-memory or DB-backed session store for Instagram to track user states (e.g., `user_id` -> `{ step: 'booking_date' }`).
-- [ ] Build bridge utility files in `Instagram/` that import from `../Telegram/src/db/` to query the shared database seamlessly.
+## Phase 2: State & Session Management (Done ✅)
+- [x] Implement an in-memory session store for Instagram to track user states (`Instagram/src/core/session.ts`).
+- [x] Build bridge utility files in `Instagram/src/db/bridge.ts` that import from `Telegram/src/db/` to query the shared database seamlessly.
+- [x] Make `telegram_id` nullable in the DB to support Instagram-only users.
+- [x] Parse Webhook payloads, sync users with the database, and retrieve session state in the webhook router.
 
-## Phase 3: Core API Wrapper
+## Phase 3: Core API Wrapper (Next Steps)
 - [ ] Write utility functions to send messages, quick replies, and generic templates using the Facebook Graph API (`https://graph.facebook.com/v19.0/me/messages`).
-- [ ] Parse incoming Webhook events cleanly to extract `sender.id` and text payloads.
+- [ ] Create an IG Context wrapper to abstract the Meta API and mimic the Telegraf `ctx` where possible, easing feature porting.
 
 ## Phase 4: Feature Porting
 - [ ] **Discovery Flow:** Send a welcome text and list of services when a user sends a message to the Instagram page.

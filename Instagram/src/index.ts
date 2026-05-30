@@ -1,11 +1,14 @@
 // Instagram/src/index.ts
 import express from "express";
 import config from "./config.ts";
+import { getSession, updateSession } from "./core/session.ts";
+import { getOrCreateIGUser } from "./db/bridge.ts";
 
 export const startInstagramBot = () => {
   const app = express();
   app.use(express.json());
 
+  // Meta Webhook Verification Endpoint
   app.get("/webhook/instagram", (req, res) => {
     const mode = req.query["hub.mode"];
     const token = req.query["hub.verify_token"];
@@ -19,20 +22,45 @@ export const startInstagramBot = () => {
     }
   });
 
-  app.post("/webhook/instagram", (req, res) => {
+  // Meta Webhook Event Receiver
+  app.post("/webhook/instagram", async (req, res) => {
     const body = req.body;
 
     if (body.object === "instagram") {
-      console.log("📩 Received Instagram Webhook Event:");
-      console.dir(body, { depth: null });
-
-      // TODO: Process Instagram DM entries
-      // 1. Extract sender ID
-      // 2. Fetch session state
-      // 3. Route to logic controller
-      // 4. Update shared database using pg
-      
+      // Respond to Meta immediately to prevent timeout retries
       res.status(200).send("EVENT_RECEIVED");
+
+      try {
+        for (const entry of body.entry) {
+          for (const messagingEvent of entry.messaging) {
+            const senderId = messagingEvent.sender.id;
+            
+            // Ignore echoes from the page itself
+            if (senderId === config.ig.pageToken) continue;
+
+            // 1. Sync User in Shared Database
+            const user = await getOrCreateIGUser(senderId);
+
+            // 2. Fetch Session State
+            const session = getSession(senderId);
+
+            // 3. Simple Routing & Context Setup (Phase 4 Placeholder)
+            if (messagingEvent.message && messagingEvent.message.text) {
+              const text = messagingEvent.message.text;
+              console.log(`[IG] Message from ${senderId} (Step: ${session.step || 'none'}): ${text}`);
+
+              // Example: updateSession(senderId, { step: 'greeting' });
+            }
+            
+            if (messagingEvent.postback) {
+              const payload = messagingEvent.postback.payload;
+              console.log(`[IG] Postback from ${senderId}: ${payload}`);
+            }
+          }
+        }
+      } catch (error) {
+        console.error("❌ Error processing Instagram Webhook Event:", error);
+      }
     } else {
       res.sendStatus(404);
     }

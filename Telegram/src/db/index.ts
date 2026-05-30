@@ -4,7 +4,7 @@ import { pool } from "./pool.ts";
 const createUsersTableSQL = `
 CREATE TABLE IF NOT EXISTS users (
   id SERIAL PRIMARY KEY,
-  telegram_id BIGINT UNIQUE NOT NULL,
+  telegram_id BIGINT UNIQUE,
   salon_name TEXT,
   onboarded_at TIMESTAMP NULL,
   calendar_type VARCHAR(10) DEFAULT 'shamsi',
@@ -65,7 +65,7 @@ const createAppointmentsTableSQL = `
 CREATE TABLE IF NOT EXISTS appointments (
   id SERIAL PRIMARY KEY,
   service_id INTEGER NOT NULL REFERENCES services(id) ON DELETE CASCADE,
-  customer_telegram_id BIGINT NOT NULL,
+  customer_telegram_id BIGINT,
   customer_name TEXT,
   appointment_date DATE NOT NULL,
   appointment_time TIME NOT NULL,
@@ -113,6 +113,9 @@ export async function initDB() {
     await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_expires_at TIMESTAMP NULL;").catch(() => {});
     await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS instagram_id VARCHAR(100) UNIQUE;").catch(() => {});
     await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS instagram_username VARCHAR(100);").catch(() => {});
+    
+    // Make telegram_id nullable to support Instagram-only users
+    await pool.query("ALTER TABLE users ALTER COLUMN telegram_id DROP NOT NULL;").catch(() => {});
 
     await pool.query(createTransactionsTableSQL);
     await pool.query("ALTER TABLE transactions ADD COLUMN IF NOT EXISTS receipt_photo_id TEXT;").catch(() => {});
@@ -129,6 +132,10 @@ export async function initDB() {
     await pool.query("ALTER TABLE appointments ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'confirmed';").catch(() => {});
     await pool.query("ALTER TABLE appointments ADD COLUMN IF NOT EXISTS reminded_24h BOOLEAN DEFAULT FALSE;").catch(() => {});
     await pool.query("ALTER TABLE appointments ADD COLUMN IF NOT EXISTS reminded_2h BOOLEAN DEFAULT FALSE;").catch(() => {});
+    
+    // Support Instagram IDs in appointments (we will store them in customer_telegram_id as BigInt or alter column later if needed)
+    await pool.query("ALTER TABLE appointments ALTER COLUMN customer_telegram_id DROP NOT NULL;").catch(() => {});
+    await pool.query("ALTER TABLE appointments ADD COLUMN IF NOT EXISTS customer_instagram_id VARCHAR(100);").catch(() => {});
 
     await pool.query(createCustomerSalonsTableSQL);
     await pool.query(createInboxMessagesTableSQL);
