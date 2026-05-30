@@ -111,6 +111,8 @@ export async function initDB() {
     await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS break_end_time TIME;").catch(() => {});
     await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS deposit_amount INTEGER DEFAULT 0;").catch(() => {});
     await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_expires_at TIMESTAMP NULL;").catch(() => {});
+    await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS instagram_id VARCHAR(100) UNIQUE;").catch(() => {});
+    await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS instagram_username VARCHAR(100);").catch(() => {});
 
     await pool.query(createTransactionsTableSQL);
     await pool.query("ALTER TABLE transactions ADD COLUMN IF NOT EXISTS receipt_photo_id TEXT;").catch(() => {});
