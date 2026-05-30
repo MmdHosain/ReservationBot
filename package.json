@@ -1,0 +1,26 @@
+{
+  "name": "reservation-bot-monorepo",
+  "version": "1.0.0",
+  "description": "Unified Reservation Bot (Telegram & Instagram)",
+  "type": "module",
+  "scripts": {
+    "start": "tsx bot.ts",
+    "dev": "tsx watch bot.ts"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "pg": "^8.20.0",
+    "reflect-metadata": "^0.2.2",
+    "telegraf": "^4.16.3",
+    "typeorm": "^0.3.28"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^25.6.0",
+    "@types/pg": "^8.20.0",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.16.2",
+    "typescript": "^6.0.3"
+  }
+}

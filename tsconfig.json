@@ -3,23 +3,17 @@
     "target": "ES2022",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-
-    "rootDir": "src",
+    "rootDir": ".",
     "outDir": "dist",
-
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-
     "sourceMap": true,
-
     "verbatimModuleSyntax": true,
     "moduleDetection": "force",
-
     "allowImportingTsExtensions": true,
     "noEmit": true
   },
-
-  "include": ["src/**/*"],
+  "include": ["bot.ts", "Telegram/src/**/*", "Instagram/src/**/*"],
   "exclude": ["dist", "node_modules"]
 }
