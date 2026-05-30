@@ -19,12 +19,13 @@ To keep the architecture clean and unified, the project acts as a single monolit
 - [x] Make `telegram_id` nullable in the DB to support Instagram-only users.
 - [x] Parse Webhook payloads, sync users with the database, and retrieve session state in the webhook router.
 
-## Phase 3: Core API Wrapper (Next Steps)
-- [ ] Write utility functions to send messages, quick replies, and generic templates using the Facebook Graph API (`https://graph.facebook.com/v19.0/me/messages`).
-- [ ] Create an IG Context wrapper to abstract the Meta API and mimic the Telegraf `ctx` where possible, easing feature porting.
+## Phase 3: Core API Wrapper (Done ✅)
+- [x] Write utility functions to send messages, quick replies, and generic templates using the Facebook Graph API (`Instagram/src/core/api.ts`).
+- [x] Create an `IGContext` wrapper (`Instagram/src/core/context.ts`) to abstract the Meta API and mimic the Telegraf `ctx`, making it easier to port Telegram logic.
+- [x] Set up a basic event router (`Instagram/src/core/router.ts`).
 
-## Phase 4: Feature Porting
-- [ ] **Discovery Flow:** Send a welcome text and list of services when a user sends a message to the Instagram page.
+## Phase 4: Feature Porting (Next Steps)
+- [ ] **Discovery Flow:** Send a welcome text and list of services when a user sends a message to the Instagram page. (Translate `customer/dashboard`).
 - [ ] **Booking Flow:** Replicate the interactive booking calendar using Instagram Quick Replies (up to 13 buttons at a time) or a structured text menu.
 - [ ] **Manager Integration:** Map Instagram DM interactions back to the manager's dashboard so they receive notifications.
 

@@ -1,8 +1,9 @@
 // Instagram/src/index.ts
 import express from "express";
 import config from "./config.ts";
-import { getSession, updateSession } from "./core/session.ts";
 import { getOrCreateIGUser } from "./db/bridge.ts";
+import { IGContext } from "./core/context.ts";
+import { handleIGEvent } from "./core/router.ts";
 
 export const startInstagramBot = () => {
   const app = express();
@@ -39,23 +40,13 @@ export const startInstagramBot = () => {
             if (senderId === config.ig.pageToken) continue;
 
             // 1. Sync User in Shared Database
-            const user = await getOrCreateIGUser(senderId);
+            await getOrCreateIGUser(senderId);
 
-            // 2. Fetch Session State
-            const session = getSession(senderId);
+            // 2. Wrap event in IGContext
+            const ctx = new IGContext(senderId, messagingEvent);
 
-            // 3. Simple Routing & Context Setup (Phase 4 Placeholder)
-            if (messagingEvent.message && messagingEvent.message.text) {
-              const text = messagingEvent.message.text;
-              console.log(`[IG] Message from ${senderId} (Step: ${session.step || 'none'}): ${text}`);
-
-              // Example: updateSession(senderId, { step: 'greeting' });
-            }
-            
-            if (messagingEvent.postback) {
-              const payload = messagingEvent.postback.payload;
-              console.log(`[IG] Postback from ${senderId}: ${payload}`);
-            }
+            // 3. Route to handlers
+            await handleIGEvent(ctx);
           }
         }
       } catch (error) {
