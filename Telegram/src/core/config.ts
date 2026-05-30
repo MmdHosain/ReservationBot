@@ -11,11 +11,6 @@ const config = {
     password: process.env.DB_PASS || "",
     database: process.env.DB_NAME || "my_telegram_bot",
   },
-  ig: {
-    verifyToken: process.env.IG_VERIFY_TOKEN || "DEFAULT_VERIFY_TOKEN",
-    pageToken: process.env.IG_PAGE_ACCESS_TOKEN || "",
-    port: parseInt(process.env.IG_PORT || "3000"),
-  }
 };
 
 if (!config.token) {

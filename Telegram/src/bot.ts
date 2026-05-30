@@ -10,7 +10,6 @@ import { initDB } from "./db/index.ts";
 import { startCronJobs } from "./core/cron.ts";
 import { launchBot } from "./core/launcher.ts";
 import { MESSAGES } from "./core/messages.ts";
-import { startIGBot } from "./ig-bot.ts";
 
 const token: string = config.token;
 
@@ -46,9 +45,6 @@ process.on("uncaughtException", (error) => {
 
 await initDB();
 startCronJobs(bot);
-
-// --- Start Instagram Webhook Server ---
-startIGBot();
 
 launchBot(bot, token);
 
