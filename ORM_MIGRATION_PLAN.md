@@ -13,15 +13,17 @@ Migrating from raw SQL (`pg` pool) to **TypeORM** requires a careful, phased app
 - [x] Update `Telegram/src/db/orm.config.ts` to include all V2 entities.
 - [x] Update `Telegram/src/db/index.ts` to call `AppDataSource.initialize()` alongside the raw SQL pool.
 
-## Phase 3: Migrate V2 Repositories to ORM (Next Steps)
-- [ ] Refactor `organization.repository.ts` and `user_v2.repository.ts` to use `AppDataSource.getRepository()` instead of raw SQL.
-- [ ] Refactor `event_type.repository.ts`, `schedule.repository.ts`, and `event.repository.ts`.
+## Phase 3: Migrate V2 Repositories to ORM (Done ✅)
+- [x] Refactored `organization.repository.ts` and `user_v2.repository.ts` to use `AppDataSource.getRepository()` instead of raw SQL.
+- [x] Refactored `event_type.repository.ts`, `schedule.repository.ts`, `event.repository.ts`, and `resource.repository.ts`.
 
-## Phase 4: Migrate V1 Repositories (Legacy)
-- [ ] Create V1 Entities (`User`, `Service`, `Appointment`, `Transaction`, `InboxMessage`, `Staff`, etc.).
-- [ ] Refactor V1 Repositories to use TypeORM.
+## Phase 4: Migrate V1 Repositories (Legacy) (In Progress ⏳)
+- [x] Created V1 Entities (`V1User`, `Service`, `Appointment`, `Transaction`, `InboxMessage`, `Staff`, etc.) compactly in `v1/index.ts`.
+- [x] Refactored core V1 Repositories (`user`, `service`, `category`, `staff`, `transaction`) to use TypeORM.
+- [ ] Refactor remaining V1 Repositories (`appointment`, `inbox`) to use TypeORM.
 
 ## Phase 5: Transaction Management & Cleanup
-- [ ] Refactor `v2_sync.ts` and `appointment.repository.ts` to use TypeORM's `DataSource.transaction()` for atomic dual-writes.
+- [ ] Refactor `v2_sync.ts` to use TypeORM.
 - [ ] Remove `pool.ts` and the `pg` dependency entirely.
+- [ ] Refactor `cron.ts` to use TypeORM.
 - [ ] Use TypeORM migrations or `synchronize` instead of raw `schema.ts`.

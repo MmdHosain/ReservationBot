@@ -1,25 +1,40 @@
 // src/db/transaction.repository.ts
-import { pool } from "./pool.ts";
+import { AppDataSource } from "./orm.config.ts";
+import { Transaction, V1User } from "./entities/v1/index.ts";
+
+const repo = AppDataSource.getRepository(Transaction);
 
 export async function createPendingTransaction(userId: number, amount: number, packageDays: number, receiptPhotoId: string) {
-  const res = await pool.query(
-    `INSERT INTO transactions (user_id, amount, package_days, status, receipt_photo_id) VALUES ($1, $2, $3, 'pending', $4) RETURNING *`,
-    [userId, amount, packageDays, receiptPhotoId]
-  );
-  return res.rows[0];
+  const tx = repo.create({
+    user_id: userId, 
+    amount, 
+    package_days: packageDays, 
+    status: 'pending', 
+    receipt_photo_id: receiptPhotoId 
+  });
+  return await repo.save(tx);
 }
 
 export async function hasPendingTransaction(userId: number) {
-  const res = await pool.query(`SELECT 1 FROM transactions WHERE user_id = $1 AND status = 'pending'`, [userId]);
-  return res.rows.length > 0;
+  const count = await repo.countBy({ user_id: userId, status: 'pending' });
+  return count > 0;
 }
 
 export async function getPendingTransactions() {
-  const res = await pool.query(`SELECT t.*, u.telegram_id, u.salon_name FROM transactions t JOIN users u ON t.user_id = u.id WHERE t.status = 'pending' ORDER BY t.created_at ASC`);
-  return res.rows;
+  const query = repo.createQueryBuilder("t")
+    .innerJoin(V1User, "u", "t.user_id = u.id")
+    .select([
+      "t.*", 
+      "u.telegram_id AS telegram_id", 
+      "u.salon_name AS salon_name"
+    ])
+    .where("t.status = 'pending'")
+    .orderBy("t.created_at", "ASC");
+    
+  return await query.getRawMany();
 }
 
 export async function updateTransactionStatus(id: number, status: string) {
-  const res = await pool.query(`UPDATE transactions SET status = $1, updated_at = NOW() WHERE id = $2 RETURNING *`, [status, id]);
-  return res.rows[0];
+  await repo.update(id, { status });
+  return await repo.findOneBy({ id });
 }

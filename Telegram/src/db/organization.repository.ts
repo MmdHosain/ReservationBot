@@ -1,50 +1,56 @@
-import { pool } from "./pool.ts";
-import type { Organization, OrganizationMember, UserOrgRole } from "./types.ts";
+import { AppDataSource } from "./orm.config.ts";
+import { Organization } from "./entities/Organization.ts";
+import { OrganizationMember } from "./entities/OrganizationMember.ts";
+import { UserOrgRole } from "./types.ts";
+
+const orgRepo = AppDataSource.getRepository(Organization);
+const memberRepo = AppDataSource.getRepository(OrganizationMember);
 
 export async function createOrganization(name: string, timezone: string = 'UTC'): Promise<Organization> {
-  const res = await pool.query(
-    `INSERT INTO organizations (name, timezone) VALUES ($1, $2) RETURNING *`,
-    [name, timezone]
-  );
-  return res.rows[0];
+  const org = orgRepo.create({ name, timezone });
+  return await orgRepo.save(org);
 }
 
-export async function getOrganizationById(id: string): Promise<Organization> {
-  const res = await pool.query(`SELECT * FROM organizations WHERE id = $1`, [id]);
-  return res.rows[0];
+export async function getOrganizationById(id: string): Promise<Organization | null> {
+  return await orgRepo.findOneBy({ id });
 }
 
 export async function addOrganizationMember(organizationId: string, userId: string, role: UserOrgRole): Promise<OrganizationMember> {
-  const res = await pool.query(
-    `INSERT INTO organization_members (organization_id, user_id, role) VALUES ($1, $2, $3) RETURNING *`,
-    [organizationId, userId, role]
-  );
-  return res.rows[0];
+  const member = memberRepo.create({
+    organization: { id: organizationId },
+    user: { id: userId },
+    role
+  });
+  return await memberRepo.save(member);
 }
 
 export async function getOrganizationMembers(organizationId: string): Promise<OrganizationMember[]> {
-  const res = await pool.query(`SELECT * FROM organization_members WHERE organization_id = $1 AND is_active = true`, [organizationId]);
-  return res.rows;
+  return await memberRepo.find({
+    where: { organization: { id: organizationId }, is_active: true },
+    relations: ["user"]
+  });
 }
 
 export async function getOrganizationsForUser(userId: string): Promise<(Organization & { role: UserOrgRole })[]> {
-  const res = await pool.query(
-    `SELECT o.*, om.role 
-     FROM organizations o 
-     JOIN organization_members om ON o.id = om.organization_id 
-     WHERE om.user_id = $1 AND om.is_active = true`,
-    [userId]
-  );
-  return res.rows;
+  const members = await memberRepo.find({
+    where: { user: { id: userId }, is_active: true },
+    relations: ["organization"]
+  });
+  
+  return members.map(m => ({
+    ...m.organization,
+    role: m.role
+  }));
 }
 
 export async function getOrganizationByTelegramId(telegramId: number): Promise<Organization | null> {
-  const res = await pool.query(
-    `SELECT o.* FROM organizations o 
-     JOIN organization_members om ON o.id = om.organization_id 
-     JOIN users_v2 u ON om.user_id = u.id 
-     WHERE u.telegram_id = $1 AND om.role = 'admin'`,
-    [telegramId]
-  );
-  return res.rows[0] || null;
+  const member = await memberRepo.findOne({
+    where: { 
+      user: { telegram_id: telegramId }, 
+      role: UserOrgRole.ADMIN 
+    },
+    relations: ["organization"]
+  });
+  
+  return member?.organization || null;
 }

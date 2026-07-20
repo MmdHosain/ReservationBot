@@ -1,149 +1,111 @@
 // src/db/user.repository.ts
-import { pool, withTransaction } from "./pool.ts";
+import { AppDataSource } from "./orm.config.ts";
+import { V1User, CustomerSalon } from "./entities/v1/index.ts";
 import { MESSAGES } from "../core/messages.ts";
 
+const userRepo = AppDataSource.getRepository(V1User);
+const customerSalonRepo = AppDataSource.getRepository(CustomerSalon);
+
 export async function getOrCreateUser(telegramId: number) {
-  const res = await pool.query("SELECT * FROM users WHERE telegram_id = $1", [
-    telegramId,
-  ]);
-  if (res.rows.length > 0) return res.rows[0];
-  const insertRes = await pool.query(
-    "INSERT INTO users (telegram_id) VALUES ($1) RETURNING *",
-    [telegramId]
-  );
-  return insertRes.rows[0];
+  let user = await userRepo.findOneBy({ telegram_id: telegramId });
+  if (!user) {
+    user = userRepo.create({ telegram_id: telegramId });
+    await userRepo.save(user);
+  }
+  return user;
 }
 
 export async function getUserByTelegramId(telegramId: number) {
-  const res = await pool.query("SELECT * FROM users WHERE telegram_id = $1", [
-    telegramId,
-  ]);
-  return res.rows[0];
+  return await userRepo.findOneBy({ telegram_id: telegramId });
 }
 
 export async function getUserById(id: number) {
-  const res = await pool.query("SELECT * FROM users WHERE id = $1", [id]);
-  return res.rows[0];
+  return await userRepo.findOneBy({ id });
 }
 
 export async function markUserOnboarded(userId: number) {
-  await pool.query(`UPDATE users SET onboarded_at = NOW() WHERE id = $1`, [
-    userId,
-  ]);
+  await userRepo.update(userId, { onboarded_at: new Date() });
 }
 
 export async function updateSalonName(userId: number, salonName: string) {
-  await pool.query(`UPDATE users SET salon_name = $1 WHERE id = $2`, [
-    salonName,
-    userId,
-  ]);
+  await userRepo.update(userId, { salon_name: salonName });
 }
 
-export async function updateCalendarType(
-  telegramId: number,
-  type: "shamsi" | "miladi"
-) {
-  await pool.query(
-    `UPDATE users SET calendar_type = $1 WHERE telegram_id = $2`,
-    [type, telegramId]
-  );
+export async function updateCalendarType(telegramId: number, type: "shamsi" | "miladi") {
+  await userRepo.update({ telegram_id: telegramId }, { calendar_type: type });
 }
 
 export async function deleteUserByTelegramId(telegramId: number) {
-  return await withTransaction(async (client) => {
-    const userRes = await client.query(
-      "SELECT id FROM users WHERE telegram_id = $1",
-      [telegramId]
-    );
-    if (userRes.rows.length === 0) {
+  return await AppDataSource.transaction(async (manager) => {
+    const user = await manager.findOneBy(V1User, { telegram_id: telegramId });
+    if (!user) {
       return { success: false, message: MESSAGES.userNotFound };
     }
-    const userId = userRes.rows[0].id;
-    await client.query("DELETE FROM services WHERE user_id = $1", [userId]);
-    await client.query("DELETE FROM users WHERE id = $1", [userId]);
+    await manager.query("DELETE FROM services WHERE user_id = $1", [user.id]);
+    await manager.delete(V1User, user.id);
     return { success: true, message: MESSAGES.userDeleted(telegramId) };
   });
 }
 
-export async function addCustomerSalon(
-  customerTelegramId: number,
-  salonUserId: number
-) {
+export async function addCustomerSalon(customerTelegramId: number, salonUserId: number) {
   const salonUser = await getUserById(salonUserId);
   if (!salonUser) return;
-  await pool.query(
-    `
-    INSERT INTO customer_salons (customer_telegram_id, salon_user_id)
-    VALUES ($1, $2)
-    ON CONFLICT DO NOTHING
-  `,
-    [customerTelegramId, salonUser.id]
-  );
+  
+  const existing = await customerSalonRepo.findOneBy({
+    customer_telegram_id: customerTelegramId,
+    salon_user_id: salonUserId
+  });
+  
+  if (!existing) {
+    const cs = customerSalonRepo.create({
+      customer_telegram_id: customerTelegramId,
+      salon_user_id: salonUserId
+    });
+    await customerSalonRepo.save(cs);
+  }
 }
 
 export async function getCustomerSalons(customerTelegramId: number) {
-  const res = await pool.query(
-    `
-    SELECT cs.id, u.salon_name, u.telegram_id as salon_telegram_id, cs.salon_user_id
-    FROM customer_salons cs
-    JOIN users u ON cs.salon_user_id = u.id
-    WHERE cs.customer_telegram_id = $1
-  `,
-    [customerTelegramId]
-  );
-  return res.rows;
+  const query = customerSalonRepo.createQueryBuilder("cs")
+    .innerJoin(V1User, "u", "cs.salon_user_id = u.id")
+    .select([
+      "cs.id AS id", 
+      "u.salon_name AS salon_name", 
+      "u.telegram_id AS salon_telegram_id", 
+      "cs.salon_user_id AS salon_user_id"
+    ])
+    .where("cs.customer_telegram_id = :telegramId", { telegramId: customerTelegramId });
+    
+  return await query.getRawMany();
 }
 
-export async function removeCustomerSalon(
-  customerTelegramId: number,
-  salonUserId: number
-) {
-  await pool.query(
-    `DELETE FROM customer_salons WHERE customer_telegram_id = $1 AND salon_user_id = $2`,
-    [customerTelegramId, salonUserId]
-  );
+export async function removeCustomerSalon(customerTelegramId: number, salonUserId: number) {
+  await customerSalonRepo.delete({
+    customer_telegram_id: customerTelegramId,
+    salon_user_id: salonUserId
+  });
 }
 
-export async function updateWorkHours(
-  telegramId: number,
-  start: string,
-  end: string
-) {
-  await pool.query(
-    `UPDATE users SET work_start_time = $1, work_end_time = $2 WHERE telegram_id = $3`,
-    [start, end, telegramId]
-  );
+export async function updateWorkHours(telegramId: number, start: string, end: string) {
+  await userRepo.update({ telegram_id: telegramId }, { work_start_time: start, work_end_time: end });
 }
 
-export async function updateBreakHours(
-  telegramId: number,
-  start: string,
-  end: string
-) {
-  await pool.query(
-    `UPDATE users SET break_start_time = $1, break_end_time = $2 WHERE telegram_id = $3`,
-    [start, end, telegramId]
-  );
+export async function updateBreakHours(telegramId: number, start: string, end: string) {
+  await userRepo.update({ telegram_id: telegramId }, { break_start_time: start, break_end_time: end });
 }
 
 export async function removeBreakHours(telegramId: number) {
-  await pool.query(
-    `UPDATE users SET break_start_time = NULL, break_end_time = NULL WHERE telegram_id = $1`,
-    [telegramId]
-  );
+  await userRepo.update({ telegram_id: telegramId }, { break_start_time: null as any, break_end_time: null as any });
 }
 
 export async function updateDeposit(telegramId: number, amount: number) {
-  await pool.query(
-    `UPDATE users SET deposit_amount = $1 WHERE telegram_id = $2`,
-    [amount, telegramId]
-  );
+  await userRepo.update({ telegram_id: telegramId }, { deposit_amount: amount });
 }
 
 export async function startFreeTrial(userId: number, days: number) {
-  await pool.query(`UPDATE users SET subscription_expires_at = NOW() + INTERVAL '${days} days' WHERE id = $1`, [userId]);
+  await userRepo.query(`UPDATE users SET subscription_expires_at = NOW() + INTERVAL '${days} days' WHERE id = $1`, [userId]);
 }
 
 export async function renewSubscription(userId: number, days: number) {
-  await pool.query(`UPDATE users SET subscription_expires_at = GREATEST(NOW(), COALESCE(subscription_expires_at, NOW())) + INTERVAL '${days} days' WHERE id = $1`, [userId]);
+  await userRepo.query(`UPDATE users SET subscription_expires_at = GREATEST(NOW(), COALESCE(subscription_expires_at, NOW())) + INTERVAL '${days} days' WHERE id = $1`, [userId]);
 }

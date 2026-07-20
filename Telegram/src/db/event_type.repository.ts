@@ -1,38 +1,52 @@
-import { pool } from "./pool.ts";
-import type { EventType, UserEventType } from "./types.ts";
+import { AppDataSource } from "./orm.config.ts";
+import { EventType } from "./entities/EventType.ts";
+import { UserEventType } from "./entities/UserEventType.ts";
+
+const etRepo = AppDataSource.getRepository(EventType);
+const uetRepo = AppDataSource.getRepository(UserEventType);
 
 export async function createEventType(organizationId: string, name: string, durationMinutes: number, bufferMinutes: number = 0): Promise<EventType> {
-  const res = await pool.query(
-    `INSERT INTO event_types (organization_id, name, duration_minutes, buffer_minutes) VALUES ($1, $2, $3, $4) RETURNING *`,
-    [organizationId, name, durationMinutes, bufferMinutes]
-  );
-  return res.rows[0];
+  const eventType = etRepo.create({
+    organization: { id: organizationId },
+    name,
+    duration_minutes: durationMinutes,
+    buffer_minutes: bufferMinutes
+  });
+  return await etRepo.save(eventType);
 }
 
 export async function getEventTypeById(id: string): Promise<EventType | null> {
-  const res = await pool.query(`SELECT * FROM event_types WHERE id = $1`, [id]);
-  return res.rows[0] || null;
+  return await etRepo.findOneBy({ id });
 }
 
 export async function getEventTypesByOrganization(organizationId: string): Promise<EventType[]> {
-  const res = await pool.query(`SELECT * FROM event_types WHERE organization_id = $1 AND is_active = true`, [organizationId]);
-  return res.rows;
+  return await etRepo.find({
+    where: { organization: { id: organizationId }, is_active: true }
+  });
 }
 
 export async function linkUserToEventType(userId: string, eventTypeId: string): Promise<UserEventType> {
-  const res = await pool.query(
-    `INSERT INTO user_event_types (user_id, event_type_id) VALUES ($1, $2) ON CONFLICT DO NOTHING RETURNING *`,
-    [userId, eventTypeId]
-  );
-  return res.rows[0];
+  const existing = await uetRepo.findOneBy({
+    user: { id: userId },
+    event_type: { id: eventTypeId }
+  });
+  
+  if (existing) return existing;
+
+  const uet = uetRepo.create({
+    user: { id: userId },
+    event_type: { id: eventTypeId }
+  });
+  return await uetRepo.save(uet);
 }
 
 export async function getEventTypesForUser(userId: string): Promise<EventType[]> {
-  const res = await pool.query(
-    `SELECT et.* FROM event_types et
-     JOIN user_event_types uet ON et.id = uet.event_type_id
-     WHERE uet.user_id = $1 AND et.is_active = true`,
-    [userId]
-  );
-  return res.rows;
+  const userEventTypes = await uetRepo.find({
+    where: { user: { id: userId } },
+    relations: ["event_type"]
+  });
+  
+  return userEventTypes
+    .map(uet => uet.event_type)
+    .filter(et => et.is_active);
 }

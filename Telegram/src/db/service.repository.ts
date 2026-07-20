@@ -1,73 +1,47 @@
 // src/db/service.repository.ts
-import { pool } from "./pool.ts";
+import { AppDataSource } from "./orm.config.ts";
+import { Service, V1User } from "./entities/v1/index.ts";
 
-export async function saveService(
-  userId: number,
-  service: {
-    name: string;
-    duration: number;
-    days: string;
-    categoryId?: number | null;
-  }
-) {
-  return pool.query(
-    `
-    INSERT INTO services (user_id, name, duration, days, category_id)
-    VALUES ($1, $2, $3, $4, $5)
-    RETURNING *;
-    `,
-    [userId, service.name, service.duration, service.days, service.categoryId || null]
-  );
+const repo = AppDataSource.getRepository(Service);
+
+export async function saveService(userId: number, service: { name: string; duration: number; days: string; categoryId?: number | null }) {
+  const svc = repo.create({
+    user_id: userId,
+    name: service.name,
+    duration: service.duration,
+    days: service.days,
+    category_id: service.categoryId || null
+  });
+  return await repo.save(svc);
 }
 
 export async function getServicesByOwnerTelegramId(telegramId: number) {
-  const res = await pool.query(
-    `SELECT s.* FROM services s
-     JOIN users u ON s.user_id = u.id
-     WHERE u.telegram_id = $1`,
-    [telegramId]
-  );
-  return res.rows;
+  const query = repo.createQueryBuilder("s")
+    .innerJoin(V1User, "u", "s.user_id = u.id")
+    .where("u.telegram_id = :telegramId", { telegramId });
+  return await query.getMany();
 }
 
 export async function getServiceById(id: number) {
-  const res = await pool.query(`SELECT * FROM services WHERE id = $1`,[id]);
-  return res.rows[0];
+  return await repo.findOneBy({ id });
 }
 
 export async function getServicesByUserId(userId: number) {
-  const res = await pool.query(`SELECT * FROM services WHERE user_id = $1`, [userId]);
-  return res.rows;
+  return await repo.find({ where: { user_id: userId } });
 }
 
 export async function deleteService(id: number) {
-  return pool.query(`DELETE FROM services WHERE id = $1`,[id]);
+  await repo.delete(id);
 }
 
 export async function updateService(id: number, service: Partial<{ name: string; duration: number; days: string; categoryId: number | null }>) {
-  const updates =[];
-  const values =[];
-  let idx = 1;
+  const updates: any = {};
+  if (service.name !== undefined) updates.name = service.name;
+  if (service.duration !== undefined) updates.duration = service.duration;
+  if (service.days !== undefined) updates.days = service.days;
+  if (service.categoryId !== undefined) updates.category_id = service.categoryId;
 
-  if (service.name !== undefined) {
-    updates.push(`name = $${idx++}`);
-    values.push(service.name);
+  if (Object.keys(updates).length > 0) {
+    await repo.update(id, updates);
   }
-  if (service.duration !== undefined) {
-    updates.push(`duration = $${idx++}`);
-    values.push(service.duration);
-  }
-  if (service.days !== undefined) {
-    updates.push(`days = $${idx++}`);
-    values.push(service.days);
-  }
-  if (service.categoryId !== undefined) {
-    updates.push(`category_id = $${idx++}`);
-    values.push(service.categoryId);
-  }
-
-  if (updates.length === 0) return;
-
-  values.push(id);
-  return pool.query(`UPDATE services SET ${updates.join(', ')} WHERE id = $${idx}`, values);
 }

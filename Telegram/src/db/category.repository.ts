@@ -1,29 +1,30 @@
 // src/db/category.repository.ts
-import { pool } from "./pool.ts";
+import { AppDataSource } from "./orm.config.ts";
+import { ServiceCategory } from "./entities/v1/index.ts";
+
+const repo = AppDataSource.getRepository(ServiceCategory);
 
 export async function createCategory(userId: number, name: string) {
-  const res = await pool.query(
-    `INSERT INTO service_categories (user_id, name) VALUES ($1, $2) RETURNING *;`,
-    [userId, name]
-  );
-  return res.rows[0];
+  const cat = repo.create({ user_id: userId, name });
+  return await repo.save(cat);
 }
 
 export async function getCategoriesByUserId(userId: number) {
-  const res = await pool.query(`SELECT * FROM service_categories WHERE user_id = $1 ORDER BY created_at ASC`, [userId]);
-  return res.rows;
+  return await repo.find({ 
+    where: { user_id: userId }, 
+    order: { created_at: "ASC" } 
+  });
 }
 
 export async function getCategoryById(id: number) {
-  const res = await pool.query(`SELECT * FROM service_categories WHERE id = $1`, [id]);
-  return res.rows[0];
+  return await repo.findOneBy({ id });
 }
 
 export async function updateCategory(id: number, name: string) {
-  const res = await pool.query(`UPDATE service_categories SET name = $1 WHERE id = $2 RETURNING *`, [name, id]);
-  return res.rows[0];
+  await repo.update(id, { name });
+  return await getCategoryById(id);
 }
 
 export async function deleteCategory(id: number) {
-  await pool.query(`DELETE FROM service_categories WHERE id = $1`, [id]);
+  await repo.delete(id);
 }

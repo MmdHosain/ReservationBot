@@ -1,30 +1,32 @@
-import { pool } from "./pool.ts";
-import type { User } from "./types.ts";
+import { AppDataSource } from "./orm.config.ts";
+import { UserV2 } from "./entities/UserV2.ts";
 
-export async function createUser(fullName: string, telegramId?: number, instagramId?: string, email?: string, phone?: string): Promise<User> {
-  const res = await pool.query(
-    `INSERT INTO users_v2 (full_name, telegram_id, instagram_id, email, phone) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-    [fullName, telegramId || null, instagramId || null, email || null, phone || null]
-  );
-  return res.rows[0];
+const userRepo = AppDataSource.getRepository(UserV2);
+
+export async function createUser(fullName: string, telegramId?: number, instagramId?: string, email?: string, phone?: string): Promise<UserV2> {
+  const user = userRepo.create({
+    full_name: fullName,
+    telegram_id: telegramId,
+    instagram_id: instagramId,
+    email,
+    phone
+  });
+  return await userRepo.save(user);
 }
 
-export async function getUserByTelegramId(telegramId: number): Promise<User | null> {
-  const res = await pool.query(`SELECT * FROM users_v2 WHERE telegram_id = $1`, [telegramId]);
-  return res.rows[0] || null;
+export async function getUserByTelegramId(telegramId: number): Promise<UserV2 | null> {
+  return await userRepo.findOneBy({ telegram_id: telegramId });
 }
 
-export async function getUserByInstagramId(instagramId: string): Promise<User | null> {
-  const res = await pool.query(`SELECT * FROM users_v2 WHERE instagram_id = $1`, [instagramId]);
-  return res.rows[0] || null;
+export async function getUserByInstagramId(instagramId: string): Promise<UserV2 | null> {
+  return await userRepo.findOneBy({ instagram_id: instagramId });
 }
 
-export async function getUserById(id: string): Promise<User | null> {
-  const res = await pool.query(`SELECT * FROM users_v2 WHERE id = $1`, [id]);
-  return res.rows[0] || null;
+export async function getUserById(id: string): Promise<UserV2 | null> {
+  return await userRepo.findOneBy({ id });
 }
 
-export async function getOrCreateUserByTelegramId(telegramId: number, fullName: string = 'Unknown'): Promise<User> {
+export async function getOrCreateUserByTelegramId(telegramId: number, fullName: string = 'Unknown'): Promise<UserV2> {
   let user = await getUserByTelegramId(telegramId);
   if (!user) {
     user = await createUser(fullName, telegramId);

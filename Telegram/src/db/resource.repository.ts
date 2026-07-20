@@ -1,23 +1,36 @@
-import { pool } from "./pool.ts";
-import type { Resource, EventResource } from "./types.ts";
+import { AppDataSource } from "./orm.config.ts";
+import { Resource } from "./entities/Resource.ts";
+import { EventResource } from "./entities/EventResource.ts";
+
+const resourceRepo = AppDataSource.getRepository(Resource);
+const eventResourceRepo = AppDataSource.getRepository(EventResource);
 
 export async function createResource(organizationId: string, name: string, resourceType?: string): Promise<Resource> {
-  const res = await pool.query(
-    `INSERT INTO resources (organization_id, name, resource_type) VALUES ($1, $2, $3) RETURNING *`,
-    [organizationId, name, resourceType || null]
-  );
-  return res.rows[0];
+  const resource = resourceRepo.create({
+    organization: { id: organizationId },
+    name,
+    resource_type: resourceType
+  });
+  return await resourceRepo.save(resource);
 }
 
 export async function getResourcesByOrganization(organizationId: string): Promise<Resource[]> {
-  const res = await pool.query(`SELECT * FROM resources WHERE organization_id = $1 AND is_active = true`, [organizationId]);
-  return res.rows;
+  return await resourceRepo.find({
+    where: { organization: { id: organizationId }, is_active: true }
+  });
 }
 
 export async function linkResourceToEvent(eventId: string, resourceId: string): Promise<EventResource> {
-  const res = await pool.query(
-    `INSERT INTO event_resources (event_id, resource_id) VALUES ($1, $2) ON CONFLICT DO NOTHING RETURNING *`,
-    [eventId, resourceId]
-  );
-  return res.rows[0];
+  const existing = await eventResourceRepo.findOneBy({
+    event_id: eventId,
+    resource_id: resourceId
+  });
+
+  if (existing) return existing;
+
+  const eventResource = eventResourceRepo.create({
+    event_id: eventId,
+    resource_id: resourceId
+  });
+  return await eventResourceRepo.save(eventResource);
 }

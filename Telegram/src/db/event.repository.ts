@@ -1,61 +1,75 @@
-import { pool } from "./pool.ts";
-import type { Event, EventParticipant, BookingMode, EventStatus, ParticipantRole } from "./types.ts";
+import { AppDataSource } from "./orm.config.ts";
+import { Event } from "./entities/Event.ts";
+import { EventParticipant } from "./entities/EventParticipant.ts";
+import { BookingMode, EventStatus, ParticipantRole } from "./types.ts";
+import { Between } from "typeorm";
+
+const eventRepo = AppDataSource.getRepository(Event);
+const participantRepo = AppDataSource.getRepository(EventParticipant);
 
 export async function createEvent(
   organizationId: string,
   eventDate: string | Date,
   eventTypeId?: string,
   title?: string,
-  bookingMode: BookingMode = 'scheduled' as BookingMode,
-  status: EventStatus = 'pending' as EventStatus,
+  bookingMode: BookingMode = BookingMode.SCHEDULED,
+  status: EventStatus = EventStatus.PENDING,
   plannedStartTime?: string | Date,
   plannedEndTime?: string | Date
 ): Promise<Event> {
-  const res = await pool.query(
-    `INSERT INTO events (organization_id, event_type_id, title, event_date, booking_mode, status, planned_start_time, planned_end_time) 
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
-    [organizationId, eventTypeId || null, title || null, eventDate, bookingMode, status, plannedStartTime || null, plannedEndTime || null]
-  );
-  return res.rows[0];
+  const event = eventRepo.create({
+    organization: { id: organizationId },
+    event_type: eventTypeId ? { id: eventTypeId } : undefined,
+    title,
+    event_date: eventDate,
+    booking_mode: bookingMode,
+    status,
+    planned_start_time: plannedStartTime ? new Date(plannedStartTime) : undefined,
+    planned_end_time: plannedEndTime ? new Date(plannedEndTime) : undefined
+  });
+  return await eventRepo.save(event);
 }
 
 export async function addEventParticipant(eventId: string, userId: string, role: ParticipantRole): Promise<EventParticipant> {
-  const res = await pool.query(
-    `INSERT INTO event_participants (event_id, user_id, role) VALUES ($1, $2, $3) RETURNING *`,
-    [eventId, userId, role]
-  );
-  return res.rows[0];
+  const participant = participantRepo.create({
+    event: { id: eventId },
+    user: { id: userId },
+    role
+  });
+  return await participantRepo.save(participant);
 }
 
 export async function getEventsByOrganization(organizationId: string, fromDate: string | Date, toDate: string | Date): Promise<Event[]> {
-  const res = await pool.query(
-    `SELECT * FROM events WHERE organization_id = $1 AND event_date >= $2 AND event_date <= $3 ORDER BY event_date, planned_start_time`,
-    [organizationId, fromDate, toDate]
-  );
-  return res.rows;
+  return await eventRepo.find({
+    where: {
+      organization: { id: organizationId },
+      event_date: Between(fromDate, toDate)
+    },
+    order: {
+      event_date: "ASC",
+      planned_start_time: "ASC"
+    }
+  });
 }
 
 export async function getEventsForUser(userId: string, role?: ParticipantRole): Promise<Event[]> {
-  let query = `
-    SELECT e.* FROM events e
-    JOIN event_participants ep ON e.id = ep.event_id
-    WHERE ep.user_id = $1
-  `;
-  const params: any[] = [userId];
+  const query = eventRepo.createQueryBuilder("e")
+    .innerJoin("event_participants", "ep", "ep.event_id = e.id")
+    .where("ep.user_id = :userId", { userId });
+
   if (role) {
-    query += ` AND ep.role = $2`;
-    params.push(role);
+    query.andWhere("ep.role = :role", { role });
   }
-  query += ` ORDER BY e.event_date, e.planned_start_time`;
-  
-  const res = await pool.query(query, params);
-  return res.rows;
+
+  query.orderBy("e.event_date", "ASC").addOrderBy("e.planned_start_time", "ASC");
+
+  return await query.getMany();
 }
 
-export async function updateEventStatus(eventId: string, status: EventStatus): Promise<Event> {
-  const res = await pool.query(
-    `UPDATE events SET status = $1, updated_at = NOW() WHERE id = $2 RETURNING *`,
-    [status, eventId]
-  );
-  return res.rows[0];
+export async function updateEventStatus(eventId: string, status: EventStatus): Promise<Event | null> {
+  const event = await eventRepo.findOneBy({ id: eventId });
+  if (!event) return null;
+  
+  event.status = status;
+  return await eventRepo.save(event);
 }
