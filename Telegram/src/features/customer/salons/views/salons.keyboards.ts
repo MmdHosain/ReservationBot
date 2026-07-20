@@ -13,12 +13,12 @@ export const buildSalonsListKeyboard = (salons: any[], categoryStr: string = 'ge
   return Markup.inlineKeyboard(buttons);
 };
 
-export const buildSalonActionKeyboard = (salonUserId: number, categoryStr: string = 'generic') => {
+export const buildSalonActionKeyboard = (salonId: string, categoryStr: string = 'generic') => {
   const m = getSalonMessages(categoryStr);
   return Markup.inlineKeyboard([
-    [Markup.button.callback(m.reserveBtn, `reserve_salon_${salonUserId}`)],
-    [Markup.button.callback(m.sendMsgBtn, `send_msg_${salonUserId}`)],
-    [Markup.button.callback(m.deleteBtn, `delete_salon_${salonUserId}`)],
+    [Markup.button.callback(m.reserveBtn, `reserve_salon_${salonId}`)],
+    [Markup.button.callback(m.sendMsgBtn, `send_msg_${salonId}`)],
+    [Markup.button.callback(m.deleteBtn, `delete_salon_${salonId}`)],
     [Markup.button.callback(m.backToSalonsBtn, "back_to_salons")]
   ]);
 };

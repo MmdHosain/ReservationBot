@@ -2,13 +2,13 @@
 import type { MyContext } from "../../../../core/types.ts";
 import * as inboxService from "../services/inbox.service.ts";
 import * as inboxView from "../views/inbox.view.ts";
-import { getUserByTelegramId } from "../../../../db/user.repository.ts";
+import { getOrganizationByAdminTelegramId } from "../../../../db/user.repository.ts";
 
 export const handleEnter = async (ctx: MyContext) => {
   try {
-    const user = await getUserByTelegramId(ctx.from!.id);
-    if (!user) return;
-    const messages = await inboxService.fetchUnreadInbox(user.id);
+    const orgId = ctx.orgId;
+    if (!orgId) return;
+    const messages = await inboxService.fetchUnreadInbox(orgId);
     if (messages.length === 0) {
       await inboxView.replyNoMessages(ctx);
       return;
@@ -38,14 +38,14 @@ export const handleReadMessage = async (ctx: MyContext) => {
       return;
     }
 
-    const user = await getUserByTelegramId(ctx.from!.id);
-    if (!user) return;
+    const orgId = ctx.orgId;
+    if (!orgId) return;
 
-    const msg = await inboxService.processReadMessage(msgId, user.id);
+    const msg = await inboxService.processReadMessage(msgId, orgId);
 
     if (msg) {
       (ctx.scene.session as any).activeInboxMsg = msg;
-      const conversation = await inboxService.fetchConversation(user.id, msg.customerTelegramId);
+      const conversation = await inboxService.fetchConversation(orgId, msg.customerTelegramId);
       await inboxView.showMessageWithConversation(ctx, conversation, msg.senderName);
     } else {
       await inboxView.showErrorMessage(ctx);
@@ -59,10 +59,10 @@ export const handleReadMessage = async (ctx: MyContext) => {
 export const handleViewArchive = async (ctx: MyContext) => {
   try {
     await ctx.answerCbQuery().catch(() => {});
-    const user = await getUserByTelegramId(ctx.from!.id);
-    if (!user) return;
+    const orgId = ctx.orgId;
+    if (!orgId) return;
     
-    const messages = await inboxService.fetchArchivedInbox(user.id);
+    const messages = await inboxService.fetchArchivedInbox(orgId);
     if (messages.length === 0) {
       await inboxView.replyNoArchivedMessages(ctx);
       return;
@@ -82,14 +82,14 @@ export const handleViewArchivedMessage = async (ctx: MyContext) => {
       return;
     }
 
-    const user = await getUserByTelegramId(ctx.from!.id);
-    if (!user) return;
+    const orgId = ctx.orgId;
+    if (!orgId) return;
 
-    const msg = await inboxService.getMessage(msgId, user.id);
+    const msg = await inboxService.getMessage(msgId, orgId);
 
     if (msg) {
       (ctx.scene.session as any).activeInboxMsg = msg;
-      const conversation = await inboxService.fetchConversation(user.id, msg.customerTelegramId);
+      const conversation = await inboxService.fetchConversation(orgId, msg.customerTelegramId);
       await inboxView.showArchivedMessageWithConversation(ctx, conversation, msg.senderName);
     } else {
       await inboxView.showErrorMessage(ctx);
@@ -119,22 +119,24 @@ export const handleText = async (ctx: MyContext) => {
   const session = ctx.scene.session as any;
   if (session.replyCustomerId && ctx.message && "text" in ctx.message) {
     const text = ctx.message.text.trim();
-    const user = await getUserByTelegramId(ctx.from!.id);
-    const salonName = user?.salon_name || "مدیریت سالن";
+    const org = await getOrganizationByAdminTelegramId(ctx.from!.id);
+    const salonName = org?.name || "مدیریت";
 
     try {
       await ctx.telegram.sendMessage(
         session.replyCustomerId,
-        `📩 پیام جدید از طرف سالن «${salonName}»:\n\n${text}`,
+        `📩 پیام جدید از طرف «${salonName}»:\n\n${text}`,
         {
           reply_markup: {
             inline_keyboard: [
-              [{ text: "↩️ پاسخ به سالن", callback_data: `reply_salon_${user.id}` }]
+              [{ text: "↩️ پاسخ", callback_data: `reply_salon_${org?.id}` }]
             ]
           }
         }
       );
-      await inboxService.saveSalonReply(user.id, session.replyCustomerId, salonName, text);
+      if (org) {
+        await inboxService.saveSalonReply(org.id, session.replyCustomerId, salonName, text);
+      }
       await inboxView.showReplySuccess(ctx);
     } catch (err) {
       await ctx.reply("❌ خطا در ارسال پیام به مشتری.");

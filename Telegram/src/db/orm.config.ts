@@ -18,9 +18,6 @@ import { EventResource } from "./entities/EventResource.ts";
 import { TransactionV2 } from "./entities/TransactionV2.ts";
 import { InboxMessageV2 } from "./entities/InboxMessageV2.ts";
 
-// V1 Legacy Entities (Kept temporarily to avoid breaking the build while refactoring repositories)
-import * as V1Entities from "./entities/v1/index.ts";
-
 export const AppDataSource = new DataSource({
   type: "postgres",
   host: config.db.host,
@@ -28,7 +25,6 @@ export const AppDataSource = new DataSource({
   username: config.db.user,
   password: config.db.password,
   database: config.db.database,
-  // Set to true to automatically create missing tables. In production, use migrations.
   synchronize: true, 
   logging: false,
   entities: [
@@ -46,8 +42,7 @@ export const AppDataSource = new DataSource({
     EventParticipant,
     EventResource,
     TransactionV2,
-    InboxMessageV2,
-    ...Object.values(V1Entities)
+    InboxMessageV2
   ],
   subscribers: [],
   migrations: [],

@@ -8,7 +8,7 @@ export const buildBackKeyboard = () => {
   ]);
 };
 
-export const buildCancelKeyboard = (apptId: number) => {
+export const buildCancelKeyboard = (apptId: string) => {
   return Markup.inlineKeyboard([
     [Markup.button.callback(ReservationMessages.cancelBtn, `cancel_appt_${apptId}`)]
   ]);

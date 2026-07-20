@@ -1,17 +1,17 @@
 // src/features/manager/billing/controllers/billing.controller.ts
 import type { MyContext } from "../../../../core/types.ts";
 import * as view from "../views/billing.view.ts";
-import { getUserByTelegramId, renewSubscription } from "../../../../db/user.repository.ts";
+import { getOrganizationByAdminTelegramId, renewSubscription, getUserByTelegramId } from "../../../../db/user.repository.ts";
 import { AppDataSource } from "../../../../db/orm.config.ts";
-import { Transaction } from "../../../../db/entities/v1/index.ts";
+import { TransactionV2 } from "../../../../db/entities/TransactionV2.ts";
 import config from "../../../../core/config.ts";
 
 export const handleEnter = async (ctx: MyContext) => {
-  const user = await getUserByTelegramId(ctx.from!.id);
-  if (!user) return;
+  const org = await getOrganizationByAdminTelegramId(ctx.from!.id);
+  if (!org) return;
   
-  const isExpired = user.subscription_expires_at && new Date(user.subscription_expires_at) < new Date();
-  await view.showPackages(ctx, !!isExpired, user.subscription_expires_at);
+  const isExpired = org.subscription_expires_at && new Date(org.subscription_expires_at) < new Date();
+  await view.showPackages(ctx, !!isExpired, org.subscription_expires_at);
 };
 
 export const handleSelectPackage = async (ctx: MyContext) => {
@@ -52,12 +52,14 @@ export const handleSuccessfulPayment = async (ctx: MyContext) => {
     
     if (ctx.from) {
       const user = await getUserByTelegramId(ctx.from.id);
-      if (user) {
+      const org = await getOrganizationByAdminTelegramId(ctx.from.id);
+      if (user && org) {
         await renewSubscription(user.id, days);
         
-        const txRepo = AppDataSource.getRepository(Transaction);
+        const txRepo = AppDataSource.getRepository(TransactionV2);
         const tx = txRepo.create({
-          user_id: user.id,
+          organization: { id: org.id },
+          user: { id: user.id },
           amount,
           package_days: days,
           status: 'approved',

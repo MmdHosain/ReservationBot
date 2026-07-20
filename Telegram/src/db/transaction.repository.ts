@@ -1,12 +1,13 @@
 // src/db/transaction.repository.ts
 import { AppDataSource } from "./orm.config.ts";
-import { Transaction, V1User } from "./entities/v1/index.ts";
+import { TransactionV2 } from "./entities/TransactionV2.ts";
 
-const repo = AppDataSource.getRepository(Transaction);
+const repo = AppDataSource.getRepository(TransactionV2);
 
-export async function createPendingTransaction(userId: number, amount: number, packageDays: number, receiptPhotoId: string) {
+export async function createPendingTransaction(orgId: string, userId: string, amount: number, packageDays: number, receiptPhotoId: string) {
   const tx = repo.create({
-    user_id: userId, 
+    organization: { id: orgId },
+    user: { id: userId }, 
     amount, 
     package_days: packageDays, 
     status: 'pending', 
@@ -15,26 +16,31 @@ export async function createPendingTransaction(userId: number, amount: number, p
   return await repo.save(tx);
 }
 
-export async function hasPendingTransaction(userId: number) {
-  const count = await repo.countBy({ user_id: userId, status: 'pending' });
+export async function hasPendingTransaction(orgId: string) {
+  const count = await repo.countBy({ organization: { id: orgId }, status: 'pending' });
   return count > 0;
 }
 
 export async function getPendingTransactions() {
   const query = repo.createQueryBuilder("t")
-    .innerJoin(V1User, "u", "t.user_id = u.id")
-    .select([
-      "t.*", 
-      "u.telegram_id AS telegram_id", 
-      "u.salon_name AS salon_name"
-    ])
+    .innerJoinAndSelect("t.organization", "o")
+    .innerJoinAndSelect("t.user", "u")
     .where("t.status = 'pending'")
     .orderBy("t.created_at", "ASC");
     
-  return await query.getRawMany();
+  const txs = await query.getMany();
+  return txs.map(t => ({
+    id: t.id,
+    amount: t.amount,
+    package_days: t.package_days,
+    receipt_photo_id: t.receipt_photo_id,
+    salon_name: t.organization.name,
+    user_id: t.user?.id,
+    telegram_id: t.user?.telegram_id
+  }));
 }
 
-export async function updateTransactionStatus(id: number, status: string) {
+export async function updateTransactionStatus(id: string, status: string) {
   await repo.update(id, { status });
-  return await repo.findOneBy({ id });
+  return await repo.findOne({ where: { id }, relations: ["user", "organization"] });
 }

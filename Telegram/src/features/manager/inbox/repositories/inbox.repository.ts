@@ -1,31 +1,30 @@
 // src/features/manager/inbox/repositories/inbox.repository.ts
 import { AppDataSource } from "../../../../db/orm.config.ts";
-import { InboxMessage as InboxMessageEntity } from "../../../../db/entities/v1/index.ts";
+import { InboxMessageV2 } from "../../../../db/entities/InboxMessageV2.ts";
 import type { InboxMessage } from "../types/inbox.types.ts";
 
-const repo = AppDataSource.getRepository(InboxMessageEntity);
+const repo = AppDataSource.getRepository(InboxMessageV2);
 
-export const getUnreadMessages = async (salonUserId: number): Promise<InboxMessage[]> => {
+export const getUnreadMessages = async (orgId: string): Promise<InboxMessage[]> => {
   const res = await repo.createQueryBuilder("msg")
-    .where("msg.salon_user_id = :salonUserId", { salonUserId })
+    .innerJoinAndSelect("msg.customer", "c")
+    .where("msg.organization_id = :orgId", { orgId })
     .andWhere("msg.is_read = false")
     .andWhere("(msg.sender_type = 'customer' OR msg.sender_type IS NULL)")
-    // Note: TypeORM doesn't natively support DISTINCT ON elegantly, using a subquery grouping as workaround if needed
-    .orderBy("msg.customer_telegram_id", "ASC")
+    .orderBy("c.telegram_id", "ASC")
     .addOrderBy("msg.created_at", "DESC")
     .getMany();
 
-  // Filter out duplicates manually in JS to mimic DISTINCT ON for simplicity
   const uniqueMap = new Map<number, any>();
   for (const row of res) {
-    if (!uniqueMap.has(row.customer_telegram_id)) {
-      uniqueMap.set(row.customer_telegram_id, row);
+    if (!uniqueMap.has(row.customer.telegram_id)) {
+      uniqueMap.set(row.customer.telegram_id, row);
     }
   }
 
   return Array.from(uniqueMap.values()).map((row) => ({
-    id: row.id.toString(),
-    customerTelegramId: row.customer_telegram_id,
+    id: row.id,
+    customerTelegramId: row.customer.telegram_id,
     senderName: row.sender_name || "Unknown",
     content: row.content,
     isRead: row.is_read,
@@ -34,26 +33,27 @@ export const getUnreadMessages = async (salonUserId: number): Promise<InboxMessa
   }));
 };
 
-export const getArchivedMessages = async (salonUserId: number): Promise<InboxMessage[]> => {
+export const getArchivedMessages = async (orgId: string): Promise<InboxMessage[]> => {
   const res = await repo.createQueryBuilder("msg")
-    .where("msg.salon_user_id = :salonUserId", { salonUserId })
+    .innerJoinAndSelect("msg.customer", "c")
+    .where("msg.organization_id = :orgId", { orgId })
     .andWhere("msg.is_read = true")
     .andWhere("(msg.sender_type = 'customer' OR msg.sender_type IS NULL)")
-    .orderBy("msg.customer_telegram_id", "ASC")
+    .orderBy("c.telegram_id", "ASC")
     .addOrderBy("msg.created_at", "DESC")
     .limit(50)
     .getMany();
 
   const uniqueMap = new Map<number, any>();
   for (const row of res) {
-    if (!uniqueMap.has(row.customer_telegram_id)) {
-      uniqueMap.set(row.customer_telegram_id, row);
+    if (!uniqueMap.has(row.customer.telegram_id)) {
+      uniqueMap.set(row.customer.telegram_id, row);
     }
   }
 
   return Array.from(uniqueMap.values()).map((row) => ({
-    id: row.id.toString(),
-    customerTelegramId: row.customer_telegram_id,
+    id: row.id,
+    customerTelegramId: row.customer.telegram_id,
     senderName: row.sender_name || "Unknown",
     content: row.content,
     isRead: row.is_read,
@@ -62,25 +62,22 @@ export const getArchivedMessages = async (salonUserId: number): Promise<InboxMes
   }));
 };
 
-export const markCustomerMessagesAsRead = async (salonUserId: number, customerTelegramId: string | number): Promise<boolean> => {
-  await repo.update({
-    salon_user_id: salonUserId,
-    customer_telegram_id: Number(customerTelegramId)
-  }, { is_read: true });
+export const markCustomerMessagesAsRead = async (orgId: string, customerTelegramId: string | number): Promise<boolean> => {
+  await repo.createQueryBuilder()
+    .update()
+    .set({ is_read: true })
+    .where("organization_id = :orgId", { orgId })
+    .andWhere("customer_id IN (SELECT id FROM users_unified WHERE telegram_id = :telegramId)", { telegramId: Number(customerTelegramId) })
+    .execute();
   return true;
 };
 
-export const getMessageById = async (id: string, salonUserId: number): Promise<InboxMessage | null> => {
-  const row = await repo.findOneBy({
-    id: parseInt(id),
-    salon_user_id: salonUserId
-  });
-  
+export const getMessageById = async (id: string, orgId: string): Promise<InboxMessage | null> => {
+  const row = await repo.findOne({ where: { id, organization: { id: orgId } }, relations: ["customer"] });
   if (!row) return null;
-  
   return {
-    id: row.id.toString(),
-    customerTelegramId: row.customer_telegram_id,
+    id: row.id,
+    customerTelegramId: row.customer.telegram_id,
     senderName: row.sender_name || "Unknown",
     content: row.content,
     isRead: row.is_read,
@@ -89,19 +86,18 @@ export const getMessageById = async (id: string, salonUserId: number): Promise<I
   };
 };
 
-export const getConversation = async (salonUserId: number, customerTelegramId: string | number, limit: number = 10): Promise<InboxMessage[]> => {
-  const res = await repo.find({
-    where: {
-        salon_user_id: salonUserId,
-        customer_telegram_id: Number(customerTelegramId)
-    },
-    order: { created_at: "DESC" },
-    take: limit
-  });
-  
+export const getConversation = async (orgId: string, customerTelegramId: string | number, limit: number = 10): Promise<InboxMessage[]> => {
+  const res = await repo.createQueryBuilder("msg")
+    .innerJoinAndSelect("msg.customer", "c")
+    .where("msg.organization_id = :orgId", { orgId })
+    .andWhere("c.telegram_id = :telegramId", { telegramId: Number(customerTelegramId) })
+    .orderBy("msg.created_at", "DESC")
+    .take(limit)
+    .getMany();
+    
   return res.map((row) => ({
-    id: row.id.toString(),
-    customerTelegramId: row.customer_telegram_id,
+    id: row.id,
+    customerTelegramId: row.customer.telegram_id,
     senderName: row.sender_name || "Unknown",
     content: row.content,
     isRead: row.is_read,

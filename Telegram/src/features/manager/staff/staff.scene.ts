@@ -14,5 +14,5 @@ Scene.action("back_dash", async (ctx) => {
   await ctx.answerCbQuery();
   await ctx.scene.enter("MANAGER_DASHBOARD_SCENE");
 });
-Scene.action(/del_staff_(\d+)/, controller.handleDelete);
+Scene.action(/del_staff_(.+)/, controller.handleDelete);
 Scene.on("text", controller.handleAdd);

@@ -6,8 +6,6 @@ import config from "../../../core/config.ts";
 import type { MyContext } from "../../../core/types.ts";
 import * as txService from "../../../db/transaction.repository.ts";
 import { renewSubscription } from "../../../db/user.repository.ts";
-import { AppDataSource } from "../../../db/orm.config.ts";
-import { V1User } from "../../../db/entities/v1/index.ts";
 
 export const handleAdminCommand = async (ctx: MyContext) => {
   await ctx.scene.enter("ADMIN_SCENE");
@@ -65,14 +63,11 @@ export const handlePendingReceipts = async (ctx: AdminContext) => {
 export const handleApproveTx = async (ctx: AdminContext) => {
   await ctx.answerCbQuery("رسید تأیید شد.", { show_alert: true }).catch(() => {});
   if (!ctx.match) return;
-  const txId = parseInt(ctx.match[1]);
+  const txId = ctx.match[1];
   const tx = await txService.updateTransactionStatus(txId, 'approved');
-  if (tx) {
-    await renewSubscription(tx.user_id, tx.package_days);
-    const user = await AppDataSource.getRepository(V1User).findOneBy({ id: tx.user_id });
-    if (user) {
-      await ctx.telegram.sendMessage(user.telegram_id, "✅ رسید پرداختی شما تأیید و اشتراک شما فعال شد.").catch(() => {});
-    }
+  if (tx && tx.user) {
+    await renewSubscription(tx.user.id, tx.package_days);
+    await ctx.telegram.sendMessage(tx.user.telegram_id, "✅ رسید پرداختی شما تأیید و اشتراک شما فعال شد.").catch(() => {});
   }
   await handlePendingReceipts(ctx);
 };
@@ -80,13 +75,10 @@ export const handleApproveTx = async (ctx: AdminContext) => {
 export const handleRejectTx = async (ctx: AdminContext) => {
   await ctx.answerCbQuery("رسید رد شد.", { show_alert: true }).catch(() => {});
   if (!ctx.match) return;
-  const txId = parseInt(ctx.match[1]);
+  const txId = ctx.match[1];
   const tx = await txService.updateTransactionStatus(txId, 'rejected');
-  if (tx) {
-    const user = await AppDataSource.getRepository(V1User).findOneBy({ id: tx.user_id });
-    if (user) {
-      await ctx.telegram.sendMessage(user.telegram_id, "❌ رسید پرداختی شما تأیید نشد. لطفاً مجدداً بررسی کنید.").catch(() => {});
-    }
+  if (tx && tx.user) {
+    await ctx.telegram.sendMessage(tx.user.telegram_id, "❌ رسید پرداختی شما تأیید نشد. لطفاً مجدداً بررسی کنید.").catch(() => {});
   }
   await handlePendingReceipts(ctx);
 };
