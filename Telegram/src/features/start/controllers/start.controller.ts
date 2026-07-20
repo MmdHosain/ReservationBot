@@ -16,7 +16,7 @@ export const handleStartCommand = async (ctx: MyContext) => {
     const owner = await service.getSalonOwner(ownerId);
     
     if (owner && owner.subscription_expires_at && new Date(owner.subscription_expires_at) < new Date()) {
-      await ctx.reply("متأسفانه نوبت‌دهی آنلاین این سالن در حال حاضر غیرفعال است.");
+      await ctx.reply("متأسفانه نوبت‌دهی آنلاین این مجموعه در حال حاضر غیرفعال است.");
       return;
     }
 
@@ -24,10 +24,18 @@ export const handleStartCommand = async (ctx: MyContext) => {
     
     // V2 Context Injection
     if (owner) {
+       let targetCategory = 'generic';
        const org = await getOrganizationByTelegramId(owner.telegram_id);
-       if (org) ctx.orgId = org.id;
+       if (org) {
+         ctx.orgId = org.id;
+         if (org.business_category) targetCategory = org.business_category;
+       }
        
-       await ctx.scene.enter("CUSTOMER_SALON_DASHBOARD_SCENE", { salonId: owner.id, salonName: owner.salon_name });
+       await ctx.scene.enter("CUSTOMER_SALON_DASHBOARD_SCENE", { 
+         salonId: owner.id, 
+         salonName: owner.salon_name,
+         category: targetCategory
+       });
        return;
     }
   }

@@ -2,6 +2,7 @@
 import type { MyContext } from "../../../../core/types.ts";
 import * as service from "../services/salons.service.ts";
 import * as view from "../views/salons.view.ts";
+import { getOrganizationByTelegramId } from "../../../../db/organization.repository.ts";
 
 export const handleEnter = async (ctx: MyContext) => {
   if (ctx.callbackQuery) await ctx.answerCbQuery().catch(() => {});
@@ -13,13 +14,13 @@ export const handleEnter = async (ctx: MyContext) => {
     const salons = await service.getSalons(ctx.from!.id);
     const salon = salons.find((s: any) => s.salon_user_id === state.salonId);
     const history = await service.getConversation(state.salonId, ctx.from!.id, 5);
-    await view.showTypeMessage(ctx, salon?.salon_name, history);
+    await view.showTypeMessage(ctx, salon?.salon_name, history, 'generic');
     return;
   }
 
   const telegramId = ctx.from!.id;
   const salons = await service.getSalons(telegramId);
-  await view.showSalonsList(ctx, salons);
+  await view.showSalonsList(ctx, salons, 'generic');
 };
 
 export const handleSelectSalon = async (ctx: MyContext) => {
@@ -29,7 +30,7 @@ export const handleSelectSalon = async (ctx: MyContext) => {
   const salons = await service.getSalons(ctx.from!.id);
   const salon = salons.find((s: any) => s.salon_user_id === salonUserId);
   if (salon) {
-    await view.showSalonDetails(ctx, salon);
+    await view.showSalonDetails(ctx, salon, 'generic');
   }
 };
 
@@ -37,7 +38,7 @@ export const handleDelete = async (ctx: MyContext) => {
   if (!ctx.match) return;
   const salonUserId = parseInt(ctx.match[1]);
   await service.removeSalon(ctx.from!.id, salonUserId);
-  await view.showDeleteSuccess(ctx);
+  await view.showDeleteSuccess(ctx, 'generic');
   await handleEnter(ctx);
 };
 
@@ -48,9 +49,15 @@ export const handleReserve = async (ctx: MyContext) => {
   const salons = await service.getSalons(ctx.from!.id);
   const salon = salons.find((s: any) => s.salon_user_id === salonUserId);
   if (salon) {
+    let category = 'generic';
+    if (salon.salon_telegram_id) {
+      const org = await getOrganizationByTelegramId(salon.salon_telegram_id);
+      if (org) category = org.business_category || 'generic';
+    }
     await ctx.scene.enter("CUSTOMER_BOOKING_WIZARD_SCENE", {
       salonId: salon.salon_user_id,
-      salonName: salon.salon_name || "سالن"
+      salonName: salon.salon_name || "مجموعه",
+      category
     });
   }
 };
@@ -63,7 +70,7 @@ export const handleSendMessage = async (ctx: MyContext) => {
   const salons = await service.getSalons(ctx.from!.id);
   const salon = salons.find((s: any) => s.salon_user_id === salonUserId);
   const history = await service.getConversation(salonUserId, ctx.from!.id, 5);
-  await view.showTypeMessage(ctx, salon?.salon_name, history);
+  await view.showTypeMessage(ctx, salon?.salon_name, history, 'generic');
 };
 
 export const handleText = async (ctx: MyContext) => {
@@ -71,7 +78,7 @@ export const handleText = async (ctx: MyContext) => {
   if (salonUserId && ctx.message && "text" in ctx.message) {
     const text = ctx.message.text.trim();
     await service.sendMessageToSalon(salonUserId, ctx.from!.id, ctx.from!.first_name || "کاربر", text);
-    await view.showMsgSentSuccess(ctx);
+    await view.showMsgSentSuccess(ctx, 'generic');
     (ctx.scene.session as any).salonUserIdForMsg = undefined;
     await handleEnter(ctx);
   }

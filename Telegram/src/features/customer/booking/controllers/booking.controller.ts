@@ -1,14 +1,16 @@
+// src/features/customer/booking/controllers/booking.controller.ts
 import * as service from "../services/booking.service.ts";
 import * as view from "../views/booking.view.ts";
 import { getAvailableDays, getAvailableSlots } from "../../../../core/utils/booking.ts";
 import type { BookingContext } from "../types/booking.types.ts";
-import { MESSAGES } from "../../../../core/messages.ts";
-import { BookingMessages } from "../views/booking.messages.ts";
+import { getCoreMessages } from "../../../../core/messages.ts";
+import { getBookingMessages } from "../views/booking.messages.ts";
 
 export const handleEnter = async (ctx: BookingContext) => {
   const state = ctx.scene.state as any;
   ctx.scene.session.salonId = state.salonId;
   ctx.scene.session.salonName = state.salonName;
+  ctx.scene.session.category = state.category || 'generic';
   ctx.scene.session.isManager = state.isManager || false;
   ctx.scene.session.targetCustomerId = state.targetCustomerId;
   ctx.scene.session.targetCustomerName = state.targetCustomerName;
@@ -17,7 +19,7 @@ export const handleEnter = async (ctx: BookingContext) => {
   
   const services = await service.getSalonServices(state.salonId);
   if (services.length === 0) {
-    await view.showNoServices(ctx);
+    await view.showNoServices(ctx, ctx.scene.session.category);
     if (ctx.scene.session.isManager) return ctx.scene.enter("MANAGER_INBOX_SCENE");
     return ctx.scene.enter("CUSTOMER_SALON_DASHBOARD_SCENE", state);
   }
@@ -35,12 +37,12 @@ export const showCategoriesOrServices = async (ctx: BookingContext) => {
     const populatedCategories = allCategories.filter(cat => populatedCatIds.has(cat.id));
     const uncategorizedServices = services.filter(svc => !svc.category_id);
 
-    await view.showRootServices(ctx, populatedCategories, uncategorizedServices);
+    await view.showRootServices(ctx, populatedCategories, uncategorizedServices, s.category);
   } else {
     const catId = s.viewingCategoryId as number;
     const cat = allCategories.find(c => c.id === catId);
     const catServices = services.filter(svc => svc.category_id === catId);
-    await view.showCategoryServices(ctx, cat?.name || "دسته‌بندی", catServices);
+    await view.showCategoryServices(ctx, cat?.name || "دسته‌بندی", catServices, s.category);
   }
 };
 
@@ -77,7 +79,7 @@ const showDates = async (ctx: BookingContext) => {
   const svc = await service.getServiceById(s.serviceId!);
   const page = s.page || 0;
   const days = getAvailableDays(svc.days, page, s.isManager);
-  await view.showDates(ctx, days, page);
+  await view.showDates(ctx, days, page, s.category);
 };
 
 export const handleDate = async (ctx: BookingContext) => {
@@ -95,49 +97,50 @@ export const handleDate = async (ctx: BookingContext) => {
   );
   
   if (slots.length === 0) {
-    await view.showNoSlots(ctx);
+    await view.showNoSlots(ctx, s.category);
     return showDates(ctx);
   }
-  await view.showTimes(ctx, slots);
+  await view.showTimes(ctx, slots, s.category);
 };
 
 export const handleTime = async (ctx: BookingContext) => {
   await ctx.answerCbQuery().catch(() => {});
   ctx.scene.session.time = ctx.match[1];
   const s = ctx.scene.session;
-  await view.showConfirm(ctx, s.serviceName!, s.date!, s.time!, s.isManager, s.targetCustomerName);
+  await view.showConfirm(ctx, s.serviceName!, s.date!, s.time!, s.isManager, s.targetCustomerName, s.category);
 };
 
 export const handleConfirm = async (ctx: BookingContext) => {
   const s = ctx.scene.session;
+  const coreMsg = getCoreMessages(s.category);
   
   try {
     if (s.isManager) {
       await service.createAppointment(s.serviceId!, s.targetCustomerId!, s.targetCustomerName!, s.date!, s.time!);
       await ctx.answerCbQuery().catch(() => {});
-      await view.showSuccess(ctx, true);
+      await view.showSuccess(ctx, true, s.category);
       await ctx.telegram.sendMessage(
         s.targetCustomerId!,
-        BookingMessages.managerBookedForYouNotification(s.salonName, s.serviceName!, s.date!, s.time!)
+        getBookingMessages(s.category).managerBookedForYouNotification(s.salonName, s.serviceName!, s.date!, s.time!)
       ).catch(() => {});
       await ctx.scene.enter("MANAGER_INBOX_SCENE");
     } else {
       await service.createAppointment(s.serviceId!, ctx.from!.id, ctx.from!.first_name || "مشتری", s.date!, s.time!);
       await ctx.answerCbQuery().catch(() => {});
-      await view.showSuccess(ctx, false);
+      await view.showSuccess(ctx, false, s.category);
       const salon = await service.getSalonById(s.salonId);
       await ctx.telegram.sendMessage(
         salon.telegram_id, 
-        MESSAGES.ownerNewBookingNotification(ctx.from!.first_name || "مشتری", s.serviceName!, s.date!, s.time!)
+        coreMsg.ownerNewBookingNotification(ctx.from!.first_name || "مشتری", s.serviceName!, s.date!, s.time!)
       ).catch(() => {});
       await ctx.scene.enter("CUSTOMER_DASHBOARD_SCENE");
     }
   } catch (err: any) {
     if (err.message === "TIME_SLOT_TAKEN") {
-      await ctx.answerCbQuery(MESSAGES.notAvailable, { show_alert: true }).catch(() => {});
+      await ctx.answerCbQuery(coreMsg.notAvailable, { show_alert: true }).catch(() => {});
       await showDates(ctx);
     } else {
-      await ctx.answerCbQuery(MESSAGES.customerBookingError, { show_alert: true }).catch(() => {});
+      await ctx.answerCbQuery(coreMsg.customerBookingError, { show_alert: true }).catch(() => {});
     }
   }
 };
@@ -147,6 +150,6 @@ export const handleCancel = async (ctx: BookingContext) => {
   if (ctx.scene.session.isManager) {
     await ctx.scene.enter("MANAGER_INBOX_SCENE");
   } else {
-    await ctx.scene.enter("CUSTOMER_SALON_DASHBOARD_SCENE", { salonId: ctx.scene.session.salonId, salonName: ctx.scene.session.salonName });
+    await ctx.scene.enter("CUSTOMER_SALON_DASHBOARD_SCENE", { salonId: ctx.scene.session.salonId, salonName: ctx.scene.session.salonName, category: ctx.scene.session.category });
   }
 };

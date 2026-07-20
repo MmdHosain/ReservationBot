@@ -1,8 +1,10 @@
+// src/features/customer/booking/types/booking.types.ts
 import { Context, Scenes } from "telegraf";
 
 export interface BookingSession extends Scenes.SceneSessionData {
   salonId: number;
   salonName: string;
+  category?: string;
   isManager?: boolean;
   targetCustomerId?: number;
   targetCustomerName?: string;
