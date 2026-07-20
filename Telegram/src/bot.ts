@@ -5,11 +5,12 @@ import config from "./core/config.ts";
 
 import { stage } from "./core/stage.ts";
 import { botHandlers } from "./core/handlers.ts";
+import { contextMiddleware } from "./core/middlewares/context.middleware.ts";
+import { getCoreMessages } from "./core/messages.ts";
 
 import { initDB } from "./db/index.ts";
 import { startCronJobs } from "./core/cron.ts";
 import { launchBot } from "./core/launcher.ts";
-import { MESSAGES } from "./core/messages.ts";
 
 export const startTelegramBot = async () => {
   const token: string = config.token;
@@ -20,6 +21,7 @@ export const startTelegramBot = async () => {
   });
 
   bot.use(session());
+  bot.use(contextMiddleware);
   bot.use(stage.middleware());
   bot.use(botHandlers);
 
@@ -29,7 +31,7 @@ export const startTelegramBot = async () => {
       err
     );
     try {
-      ctx.reply(MESSAGES.globalError).catch(() => {});
+      ctx.reply(getCoreMessages(ctx.businessCategory).globalError).catch(() => {});
     } catch (e) {
       console.error("❌ [Bot Error] Failed to send fallback error message:", e);
     }

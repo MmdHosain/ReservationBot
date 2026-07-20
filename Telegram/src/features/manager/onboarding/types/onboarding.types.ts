@@ -5,6 +5,7 @@ export interface OnboardingDraft {
   duration?: number;
   daysOfWeek?: string[];
   categoryId?: number | null;
+  businessCategory?: string;
 }
 export interface OnboardingSession extends Scenes.SceneSessionData {
   draft: OnboardingDraft;

@@ -5,7 +5,7 @@ import { OnboardingMessages } from "../views/onboarding.messages.ts";
 import type { OnboardingContext } from "../types/onboarding.types.ts";
 
 export const handleEnter = async (ctx: OnboardingContext) => {
-  ctx.scene.session.draft = { serviceName: undefined, duration: undefined, daysOfWeek: undefined, categoryId: undefined };
+  ctx.scene.session.draft = { serviceName: undefined, duration: undefined, daysOfWeek: undefined, categoryId: undefined, businessCategory: undefined };
   ctx.scene.session.step = undefined;
   const status = await service.checkUserStatus(ctx.from!.id);
   await view.showWelcome(ctx, status.isNewUser);
@@ -13,18 +13,31 @@ export const handleEnter = async (ctx: OnboardingContext) => {
 
 export const handleStart = async (ctx: OnboardingContext) => {
   await ctx.answerCbQuery().catch(() => {});
-  ctx.scene.session.draft = { serviceName: undefined, duration: undefined, daysOfWeek: undefined, categoryId: undefined };
+  ctx.scene.session.draft = { serviceName: undefined, duration: undefined, daysOfWeek: undefined, categoryId: undefined, businessCategory: undefined };
   
   const status = await service.checkUserStatus(ctx.from!.id);
-  const categories = await service.getUserCategories(status.userId);
   
-  if (categories.length > 0) {
-    ctx.scene.session.step = "ask_category";
-    await view.showAskCategory(ctx, categories);
+  if (status.isNewUser) {
+    ctx.scene.session.step = "ask_business_category";
+    await view.showAskBusinessCategory(ctx);
   } else {
-    ctx.scene.session.step = "ask_service_name";
-    await view.showAskServiceName(ctx);
+    const categories = await service.getUserCategories(status.userId);
+    if (categories.length > 0) {
+      ctx.scene.session.step = "ask_category";
+      await view.showAskCategory(ctx, categories);
+    } else {
+      ctx.scene.session.step = "ask_service_name";
+      await view.showAskServiceName(ctx);
+    }
   }
+};
+
+export const handleBusinessCategory = async (ctx: OnboardingContext) => {
+  await ctx.answerCbQuery().catch(() => {});
+  ctx.scene.session.draft.businessCategory = ctx.match[1];
+  
+  ctx.scene.session.step = "ask_service_name";
+  await view.showAskServiceName(ctx);
 };
 
 export const handleCategorySelection = async (ctx: OnboardingContext) => {

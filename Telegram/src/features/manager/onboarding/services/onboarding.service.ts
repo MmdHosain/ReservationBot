@@ -4,6 +4,8 @@ import { saveService } from "../../../../db/service.repository.ts";
 import { getCategoriesByUserId } from "../../../../db/category.repository.ts";
 
 // V2 Imports
+import { AppDataSource } from "../../../../db/orm.config.ts";
+import { Organization } from "../../../../db/entities/Organization.ts";
 import { getOrCreateUserByTelegramId } from "../../../../db/user_v2.repository.ts";
 import { createOrganization, addOrganizationMember } from "../../../../db/organization.repository.ts";
 import { createEventType, linkUserToEventType } from "../../../../db/event_type.repository.ts";
@@ -33,6 +35,11 @@ export const registerSalon = async (userId: number, salonName: string, telegramI
     // V2 Flow (Migration Dual Write)
     const v2User = await getOrCreateUserByTelegramId(telegramId, fullName);
     const org = await createOrganization(salonName);
+
+    if (draft && draft.businessCategory) {
+      await AppDataSource.getRepository(Organization).update(org.id, { business_category: draft.businessCategory });
+    }
+
     await addOrganizationMember(org.id, v2User.id, UserOrgRole.ADMIN);
 
     if (draft && draft.serviceName && draft.duration) {

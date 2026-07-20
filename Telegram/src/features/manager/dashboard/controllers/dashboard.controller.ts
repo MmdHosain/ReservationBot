@@ -1,7 +1,7 @@
 // src/features/manager/dashboard/controllers/dashboard.controller.ts
 import * as service from "../services/dashboard.service.ts";
 import * as view from "../views/dashboard.view.ts";
-import { MESSAGES } from "../../../../core/messages.ts";
+import { getCoreMessages } from "../../../../core/messages.ts";
 import type { DashboardContext } from "../types/dashboard.types.ts";
 import type { MyContext } from "../../../../core/types.ts";
 
@@ -16,7 +16,7 @@ export const handleManagerCommand = async (ctx: MyContext) => {
       await ctx.scene.enter("MANAGER_BILLING_SCENE");
       return;
     }
-    await ctx.reply(MESSAGES.welcomeBack);
+    await ctx.reply(getCoreMessages(ctx.businessCategory).welcomeBack);
     await ctx.scene.enter("MANAGER_DASHBOARD_SCENE");
   } else {
     await ctx.scene.enter("MANAGER_ONBOARDING_SCENE");
@@ -25,7 +25,7 @@ export const handleManagerCommand = async (ctx: MyContext) => {
 
 export const handleEnter = async (ctx: DashboardContext) => {
   const user = await service.getUserInfo(ctx.from!.id);
-  const salonName = user?.salon_name || "سالن";
+  const salonName = user?.salon_name || "مجموعه";
   await view.showDashboard(ctx, salonName);
 };
 
@@ -65,7 +65,7 @@ export const handleGuide = async (ctx: DashboardContext) => {
 
 export const handleRestart = async (ctx: DashboardContext) => {
   await ctx.answerCbQuery();
-  await ctx.editMessageText(MESSAGES.deletingUser);
+  await ctx.editMessageText(getCoreMessages(ctx.businessCategory).deletingUser);
   const result = await service.restartSalon(ctx.from!.id);
   await view.showRestartResult(ctx, result.success, result.message);
   await ctx.scene.leave();

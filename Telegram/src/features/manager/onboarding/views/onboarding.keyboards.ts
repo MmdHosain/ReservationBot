@@ -6,6 +6,13 @@ export const buildStartKeyboard = () => Markup.inlineKeyboard([
   [Markup.button.callback(OnboardingMessages.startBtn, "start_service")],
 ]);
 
+export const buildBusinessCategoryKeyboard = () => Markup.inlineKeyboard([
+  [Markup.button.callback(OnboardingMessages.bizBeautyBtn, "biz_beauty")],
+  [Markup.button.callback(OnboardingMessages.bizMedicalBtn, "biz_medical")],
+  [Markup.button.callback(OnboardingMessages.bizEducationBtn, "biz_education")],
+  [Markup.button.callback(OnboardingMessages.bizGenericBtn, "biz_generic")],
+]);
+
 export const buildCategoryKeyboard = (categories: any[]) => {
   const buttons = categories.map(c => [Markup.button.callback(`📂 ${c.name}`, `sel_cat_${c.id}`)]);
   buttons.push([Markup.button.callback(OnboardingMessages.noCategoryBtn, "sel_cat_none")]);

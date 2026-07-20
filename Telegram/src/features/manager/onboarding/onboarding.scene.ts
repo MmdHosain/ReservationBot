@@ -8,6 +8,7 @@ export const Scene = new Scenes.BaseScene<OnboardingContext>(SCENE_ID);
 
 Scene.enter(controller.handleEnter);
 Scene.action("start_service", controller.handleStart);
+Scene.action(/biz_(.+)/, controller.handleBusinessCategory);
 Scene.action(/sel_cat_(.+)/, controller.handleCategorySelection);
 Scene.action(/dur_(\d+)/, (ctx) => controller.handleDuration(ctx, parseInt(ctx.match[1])));
 Scene.action(/day_(.*)/, (ctx) => controller.handleDaySelection(ctx, ctx.match[1]));

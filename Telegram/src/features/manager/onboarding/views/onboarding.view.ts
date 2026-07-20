@@ -1,6 +1,6 @@
 // src/features/manager/onboarding/views/onboarding.view.ts
 import { OnboardingMessages } from "./onboarding.messages.ts";
-import { buildStartKeyboard, buildCategoryKeyboard, buildDurationKeyboard, buildDaysKeyboard, buildGoToDashboardKeyboard } from "./onboarding.keyboards.ts";
+import { buildStartKeyboard, buildBusinessCategoryKeyboard, buildCategoryKeyboard, buildDurationKeyboard, buildDaysKeyboard, buildGoToDashboardKeyboard } from "./onboarding.keyboards.ts";
 import type { OnboardingContext } from "../types/onboarding.types.ts";
 
 export const showWelcome = async (ctx: OnboardingContext, isNewUser: boolean) => {
@@ -13,6 +13,12 @@ export const showWelcome = async (ctx: OnboardingContext, isNewUser: boolean) =>
     if (ctx.callbackQuery) await ctx.editMessageText(OnboardingMessages.addNewServicePrompt, kb);
     else await ctx.reply(OnboardingMessages.addNewServicePrompt, kb);
   }
+};
+
+export const showAskBusinessCategory = async (ctx: OnboardingContext) => {
+  const kb = buildBusinessCategoryKeyboard();
+  if (ctx.callbackQuery) await ctx.editMessageText(OnboardingMessages.askBusinessCategory, kb);
+  else await ctx.reply(OnboardingMessages.askBusinessCategory, kb);
 };
 
 export const showAskCategory = async (ctx: OnboardingContext, categories: any[]) => {
