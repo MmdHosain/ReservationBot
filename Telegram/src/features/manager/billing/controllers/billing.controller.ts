@@ -2,7 +2,8 @@
 import type { MyContext } from "../../../../core/types.ts";
 import * as view from "../views/billing.view.ts";
 import { getUserByTelegramId, renewSubscription } from "../../../../db/user.repository.ts";
-import { pool } from "../../../../db/pool.ts";
+import { AppDataSource } from "../../../../db/orm.config.ts";
+import { Transaction } from "../../../../db/entities/v1/index.ts";
 import config from "../../../../core/config.ts";
 
 export const handleEnter = async (ctx: MyContext) => {
@@ -53,10 +54,16 @@ export const handleSuccessfulPayment = async (ctx: MyContext) => {
       const user = await getUserByTelegramId(ctx.from.id);
       if (user) {
         await renewSubscription(user.id, days);
-        await pool.query(
-          `INSERT INTO transactions (user_id, amount, package_days, status, authority) VALUES ($1, $2, $3, 'approved', $4)`,
-          [user.id, amount, days, payment.provider_payment_charge_id || payment.telegram_payment_charge_id]
-        );
+        
+        const txRepo = AppDataSource.getRepository(Transaction);
+        const tx = txRepo.create({
+          user_id: user.id,
+          amount,
+          package_days: days,
+          status: 'approved',
+          authority: payment.provider_payment_charge_id || payment.telegram_payment_charge_id
+        });
+        await txRepo.save(tx);
         
         await ctx.reply(`✅ پرداخت شما با موفقیت انجام شد و اشتراک شما به مدت ${days} روز تمدید گردید.`);
         await ctx.scene.enter("MANAGER_DASHBOARD_SCENE");

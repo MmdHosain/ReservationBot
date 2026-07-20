@@ -1,28 +1,35 @@
 // src/cron.ts
-import { pool } from "../db/pool.ts";
+import { AppDataSource } from "../db/orm.config.ts";
+import { Appointment, Service, V1User } from "../db/entities/v1/index.ts";
 import dayjs from "dayjs";
 import { Telegraf } from "telegraf";
 
 export function startCronJobs(bot: Telegraf<any>) {
+  const apptRepo = AppDataSource.getRepository(Appointment);
+  const userRepo = AppDataSource.getRepository(V1User);
+
   // Appointment remider cron (every 1 min)
   setInterval(async () => {
     try {
       const now = dayjs();
 
-      const res = await pool.query(`
-        SELECT a.*, s.name as service_name, u.salon_name
-        FROM appointments a
-        JOIN services s ON a.service_id = s.id
-        JOIN users u ON s.user_id = u.id
-        WHERE a.status = 'confirmed' AND a.reminded_24h = FALSE
-      `);
+      // Query for 24h reminders
+      const rem24 = await apptRepo.createQueryBuilder("a")
+        .innerJoinAndMapOne("a.service", Service, "s", "a.service_id = s.id")
+        .innerJoinAndMapOne("s.user", V1User, "u", "s.user_id = u.id")
+        .where("a.status = 'confirmed'")
+        .andWhere("a.reminded_24h = FALSE")
+        .getMany();
 
-      for (const appt of res.rows) {
+      for (const appt of rem24) {
+        const s = (appt as any).service;
+        const u = s?.user;
+        
         const apptDate = dayjs(appt.appointment_date).format("YYYY-MM-DD");
-        const apptTimeStr =
-          typeof appt.appointment_time === "string"
-            ? appt.appointment_time
-            : appt.appointment_time.toISOString().substring(11, 19);
+        const apptTimeStr = typeof appt.appointment_time === "string" 
+            ? appt.appointment_time 
+            : (appt.appointment_time as Date).toTimeString().substring(0,8);
+            
         const apptTime = dayjs(`${apptDate}T${apptTimeStr}`);
         const diffHours = apptTime.diff(now, "hour", true);
 
@@ -30,30 +37,31 @@ export function startCronJobs(bot: Telegraf<any>) {
           await bot.telegram
             .sendMessage(
               appt.customer_telegram_id,
-              `یادآوری: شما فردا یک نوبت برای ${appt.service_name} در ${appt.salon_name} دارید.`
+              `یادآوری: شما فردا یک نوبت برای ${s?.name} در ${u?.salon_name} دارید.`
             )
             .catch(() => {});
-          await pool.query(
-            `UPDATE appointments SET reminded_24h = TRUE WHERE id = $1`,
-            [appt.id]
-          );
+          
+          await apptRepo.update(appt.id, { reminded_24h: true });
         }
       }
 
-      const res2 = await pool.query(`
-        SELECT a.*, s.name as service_name, u.salon_name
-        FROM appointments a
-        JOIN services s ON a.service_id = s.id
-        JOIN users u ON s.user_id = u.id
-        WHERE a.status = 'confirmed' AND a.reminded_2h = FALSE
-      `);
+      // Query for 2h reminders
+      const rem2 = await apptRepo.createQueryBuilder("a")
+        .innerJoinAndMapOne("a.service", Service, "s", "a.service_id = s.id")
+        .innerJoinAndMapOne("s.user", V1User, "u", "s.user_id = u.id")
+        .where("a.status = 'confirmed'")
+        .andWhere("a.reminded_2h = FALSE")
+        .getMany();
 
-      for (const appt of res2.rows) {
+      for (const appt of rem2) {
+        const s = (appt as any).service;
+        const u = s?.user;
+        
         const apptDate = dayjs(appt.appointment_date).format("YYYY-MM-DD");
-        const apptTimeStr =
-          typeof appt.appointment_time === "string"
-            ? appt.appointment_time
-            : appt.appointment_time.toISOString().substring(11, 19);
+        const apptTimeStr = typeof appt.appointment_time === "string" 
+            ? appt.appointment_time 
+            : (appt.appointment_time as Date).toTimeString().substring(0,8);
+            
         const apptTime = dayjs(`${apptDate}T${apptTimeStr}`);
         const diffHours = apptTime.diff(now, "hour", true);
 
@@ -61,13 +69,11 @@ export function startCronJobs(bot: Telegraf<any>) {
           await bot.telegram
             .sendMessage(
               appt.customer_telegram_id,
-              `یادآوری: شما تا ۲ ساعت دیگر یک نوبت برای ${appt.service_name} در ${appt.salon_name} دارید.`
+              `یادآوری: شما تا ۲ ساعت دیگر یک نوبت برای ${s?.name} در ${u?.salon_name} دارید.`
             )
             .catch(() => {});
-          await pool.query(
-            `UPDATE appointments SET reminded_2h = TRUE WHERE id = $1`,
-            [appt.id]
-          );
+          
+          await apptRepo.update(appt.id, { reminded_2h: true });
         }
       }
     } catch (err) {
@@ -80,7 +86,7 @@ export function startCronJobs(bot: Telegraf<any>) {
     try {
       const now = dayjs();
       if (now.hour() === 10) {
-         const res = await pool.query(`
+         const warningUsers = await AppDataSource.query(`
            SELECT telegram_id, EXTRACT(DAY FROM (subscription_expires_at - NOW())) AS days_left
            FROM users 
            WHERE subscription_expires_at IS NOT NULL 
@@ -88,7 +94,7 @@ export function startCronJobs(bot: Telegraf<any>) {
              AND subscription_expires_at <= NOW() + INTERVAL '3 days'
          `);
          
-         for (const user of res.rows) {
+         for (const user of warningUsers) {
            const daysLeft = Math.floor(user.days_left);
            if (daysLeft === 3 || daysLeft === 1) {
              await bot.telegram.sendMessage(
@@ -98,7 +104,7 @@ export function startCronJobs(bot: Telegraf<any>) {
            }
          }
 
-         const expiredRes = await pool.query(`
+         const expiredUsers = await AppDataSource.query(`
            SELECT telegram_id 
            FROM users 
            WHERE subscription_expires_at IS NOT NULL 
@@ -106,7 +112,7 @@ export function startCronJobs(bot: Telegraf<any>) {
              AND subscription_expires_at >= NOW() - INTERVAL '1 day'
          `);
 
-         for (const user of expiredRes.rows) {
+         for (const user of expiredUsers) {
            await bot.telegram.sendMessage(
              user.telegram_id,
              `❌ اعتبار پنل شما به پایان رسیده است و نوبت‌دهی آنلاین غیرفعال شد. جهت تمدید وارد پنل /manager شوید.`

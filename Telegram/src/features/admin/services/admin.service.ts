@@ -1,13 +1,18 @@
-// src/features/admin/services/admin.service.ts jj
-import { pool } from "../../../db/pool.ts";
+// src/features/admin/services/admin.service.ts
+import { AppDataSource } from "../../../db/orm.config.ts";
+import { V1User, Service, Appointment } from "../../../db/entities/v1/index.ts";
 
 export const getBotStats = async () => {
-  const res = await pool.query(`
-    SELECT 
-      (SELECT COUNT(*) FROM users) AS total_users,
-      (SELECT COUNT(*) FROM users WHERE salon_name IS NOT NULL) AS total_salons,
-      (SELECT COUNT(*) FROM appointments) AS total_appointments,
-      (SELECT COUNT(*) FROM services) AS total_services
-  `);
-  return res.rows[0];
+  const userRepo = AppDataSource.getRepository(V1User);
+  const apptRepo = AppDataSource.getRepository(Appointment);
+  const svcRepo = AppDataSource.getRepository(Service);
+
+  const total_users = await userRepo.count();
+  const total_salons = await userRepo.createQueryBuilder("u")
+    .where("u.salon_name IS NOT NULL")
+    .getCount();
+  const total_appointments = await apptRepo.count();
+  const total_services = await svcRepo.count();
+
+  return { total_users, total_salons, total_appointments, total_services };
 };

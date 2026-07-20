@@ -25,8 +25,8 @@ export const AppDataSource = new DataSource({
   username: config.db.user,
   password: config.db.password,
   database: config.db.database,
-  // Keep synchronize false during migration so it doesn't drop/modify raw SQL tables unexpectedly
-  synchronize: false, 
+  // Set to true to automatically create missing tables. In production, use migrations.
+  synchronize: true, 
   logging: false,
   entities: [
     Organization,

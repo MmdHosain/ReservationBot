@@ -9,7 +9,8 @@ import { handleProfileCommand } from "../features/profile/profile/controllers/pr
 import { handleCustomerCommand } from "../features/customer/index.ts";
 import { handleAdminCommand } from "../features/admin/index.ts";
 import { renewSubscription, getUserByTelegramId } from "../db/user.repository.ts";
-import { pool } from "../db/pool.ts";
+import { AppDataSource } from "../db/orm.config.ts";
+import { Transaction } from "../db/entities/v1/index.ts";
 
 export const botHandlers = new Composer<MyContext>();
 
@@ -44,10 +45,16 @@ botHandlers.on("successful_payment", async (ctx) => {
       const user = await getUserByTelegramId(ctx.from.id);
       if (user) {
         await renewSubscription(user.id, days);
-        await pool.query(
-          `INSERT INTO transactions (user_id, amount, package_days, status, authority) VALUES ($1, $2, $3, 'approved', $4)`,
-          [user.id, amount, days, payment.provider_payment_charge_id || payment.telegram_payment_charge_id]
-        );
+        
+        const txRepo = AppDataSource.getRepository(Transaction);
+        const tx = txRepo.create({
+          user_id: user.id,
+          amount,
+          package_days: days,
+          status: 'approved',
+          authority: payment.provider_payment_charge_id || payment.telegram_payment_charge_id
+        });
+        await txRepo.save(tx);
         
         await ctx.reply(`✅ پرداخت شما با موفقیت انجام شد و اشتراک شما به مدت ${days} روز تمدید گردید.`);
       }

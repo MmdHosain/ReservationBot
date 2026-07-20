@@ -1,7 +1,8 @@
 // src/features/manager/inbox/services/inbox.service.ts
 import * as repository from "../repositories/inbox.repository.ts";
 import type { InboxMessage } from "../types/inbox.types.ts";
-import { pool } from "../../../../db/pool.ts";
+import { AppDataSource } from "../../../../db/orm.config.ts";
+import { InboxMessage as InboxMessageEntity } from "../../../../db/entities/v1/index.ts";
 
 export const fetchUnreadInbox = async (salonUserId: number): Promise<InboxMessage[]> => {
   const messages = await repository.getUnreadMessages(salonUserId);
@@ -38,8 +39,14 @@ export const fetchConversation = async (salonUserId: number, customerTelegramId:
 };
 
 export const saveSalonReply = async (salonUserId: number, customerTelegramId: number | string, salonName: string, content: string) => {
-  await pool.query(
-    `INSERT INTO inbox_messages (salon_user_id, customer_telegram_id, sender_name, content, sender_type, is_read) VALUES ($1, $2, $3, $4, 'salon', true)`,
-    [salonUserId, customerTelegramId, salonName, content]
-  );
+  const repo = AppDataSource.getRepository(InboxMessageEntity);
+  const msg = repo.create({
+    salon_user_id: salonUserId,
+    customer_telegram_id: Number(customerTelegramId),
+    sender_name: salonName,
+    content,
+    sender_type: 'salon',
+    is_read: true
+  });
+  await repo.save(msg);
 };

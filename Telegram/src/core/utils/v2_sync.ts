@@ -1,10 +1,12 @@
-import { pool } from "../../db/pool.ts";
+import { AppDataSource } from "../../db/orm.config.ts";
 import { getOrganizationByTelegramId } from "../../db/organization.repository.ts";
 import { getSchedulesByOrganization, createScheduleRule } from "../../db/schedule.repository.ts";
 import { getUserByTelegramId as getV1User } from "../../db/user.repository.ts";
 import { getUserByTelegramId as getV2User } from "../../db/user_v2.repository.ts";
 import { getServicesByUserId } from "../../db/service.repository.ts";
 import { createEventType, linkUserToEventType } from "../../db/event_type.repository.ts";
+import { EventType } from "../../db/entities/EventType.ts";
+import { ScheduleRule } from "../../db/entities/ScheduleRule.ts";
 
 /**
  * Bridges V1 data changes (Work Hours, Breaks, Services) to the new V2 DBML schema (Schedules, Event Types).
@@ -21,7 +23,7 @@ export async function syncV2State(telegramId: number) {
         // 1. Sync Event Types (Services)
         const v1Services = await getServicesByUserId(v1User.id);
         // Clear existing to recreate fresh sync
-        await pool.query('DELETE FROM event_types WHERE organization_id = $1', [org.id]);
+        await AppDataSource.getRepository(EventType).delete({ organization: { id: org.id } });
         for (const svc of v1Services) {
             const et = await createEventType(org.id, svc.name, svc.duration);
             await linkUserToEventType(v2User.id, et.id);
@@ -31,7 +33,7 @@ export async function syncV2State(telegramId: number) {
         const schedules = await getSchedulesByOrganization(org.id);
         if (schedules.length > 0) {
             const scheduleId = schedules[0].id;
-            await pool.query('DELETE FROM schedule_rules WHERE schedule_id = $1', [scheduleId]);
+            await AppDataSource.getRepository(ScheduleRule).delete({ schedule: { id: scheduleId } });
 
             const workingDaysFa = new Set<string>();
             v1Services.forEach((svc: any) => {

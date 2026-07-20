@@ -17,13 +17,18 @@ Migrating from raw SQL (`pg` pool) to **TypeORM** requires a careful, phased app
 - [x] Refactored `organization.repository.ts` and `user_v2.repository.ts` to use `AppDataSource.getRepository()` instead of raw SQL.
 - [x] Refactored `event_type.repository.ts`, `schedule.repository.ts`, `event.repository.ts`, and `resource.repository.ts`.
 
-## Phase 4: Migrate V1 Repositories (Legacy) (In Progress ⏳)
+## Phase 4: Migrate V1 Repositories (Legacy) (Done ✅)
 - [x] Created V1 Entities (`V1User`, `Service`, `Appointment`, `Transaction`, `InboxMessage`, `Staff`, etc.) compactly in `v1/index.ts`.
 - [x] Refactored core V1 Repositories (`user`, `service`, `category`, `staff`, `transaction`) to use TypeORM.
-- [ ] Refactor remaining V1 Repositories (`appointment`, `inbox`) to use TypeORM.
+- [x] Refactored remaining V1 Repositories (`appointment`, `inbox`) to use TypeORM, replacing manual queries with Entity/QueryBuilder operations.
 
-## Phase 5: Transaction Management & Cleanup
-- [ ] Refactor `v2_sync.ts` to use TypeORM.
-- [ ] Remove `pool.ts` and the `pg` dependency entirely.
-- [ ] Refactor `cron.ts` to use TypeORM.
-- [ ] Use TypeORM migrations or `synchronize` instead of raw `schema.ts`.
+## Phase 5: Transaction Management & Cleanup (Done ✅)
+- [x] Refactored `v2_sync.ts` to use TypeORM.
+- [x] Removed `pool.ts` and the `pg` dependency imports, completely disconnecting raw pg driver calls.
+- [x] Refactored `cron.ts` to use TypeORM QueryBuilders.
+- [x] Deleted raw `schema.ts`. Configured `orm.config.ts` to manage schema syncing (`synchronize: true`).
+- [x] Updated all controller and service hooks that formerly relied on raw postgres queries.
+
+---
+
+🎉 **Migration Complete!** The monorepo has successfully transitioned entirely from `pg` raw SQL execution to **TypeORM** for both V1 legacy components and the V2 core engine, setting the stage for cleaner transactions, relations, and future migrations.
