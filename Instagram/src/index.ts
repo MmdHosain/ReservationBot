@@ -39,7 +39,7 @@ export const startInstagramBot = () => {
             // Ignore echoes from the page itself
             if (senderId === config.ig.pageToken) continue;
 
-            // 1. Sync User in Shared Database
+            // 1. Sync User in Shared V2 Database
             await getOrCreateIGUser(senderId);
 
             // 2. Wrap event in IGContext
