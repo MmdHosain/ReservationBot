@@ -6,8 +6,8 @@ import config from "../core/config.ts";
 
 export async function initDB() {
   try {
-    // Temporary cleanup of orphaned V2 data to allow TypeORM synchronize to succeed
-    // during this hard migration from V1 to V2 tables.
+    // Robust cleanup of orphaned V2 data to allow TypeORM synchronize to succeed
+    // during this hard migration phase.
     const client = new Client({
       host: config.db.host,
       port: config.db.port,
@@ -17,9 +17,37 @@ export async function initDB() {
     });
     await client.connect();
     
-    await client.query(`DELETE FROM organization_members WHERE user_id NOT IN (SELECT id FROM users_unified);`).catch(() => {});
-    await client.query(`DELETE FROM event_participants WHERE user_id NOT IN (SELECT id FROM users_unified);`).catch(() => {});
-    await client.query(`DELETE FROM user_event_types WHERE user_id NOT IN (SELECT id FROM users_unified);`).catch(() => {});
+    try {
+      await client.query(`
+        DO $$
+        BEGIN
+          -- Clean organization_members
+          IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'users_unified') 
+             AND EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'organization_members') THEN
+            DELETE FROM organization_members WHERE user_id NOT IN (SELECT id FROM users_unified);
+          END IF;
+          
+          IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'organizations') 
+             AND EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'organization_members') THEN
+            DELETE FROM organization_members WHERE organization_id NOT IN (SELECT id FROM organizations);
+          END IF;
+
+          -- Clean event_participants
+          IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'users_unified') 
+             AND EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'event_participants') THEN
+            DELETE FROM event_participants WHERE user_id NOT IN (SELECT id FROM users_unified);
+          END IF;
+
+          -- Clean user_event_types
+          IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'users_unified') 
+             AND EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'user_event_types') THEN
+            DELETE FROM user_event_types WHERE user_id NOT IN (SELECT id FROM users_unified);
+          END IF;
+        END $$;
+      `);
+    } catch(e) {
+      console.error("⚠️ Pre-sync cleanup warning (can be ignored if fresh DB):", e);
+    }
     
     await client.end();
 
