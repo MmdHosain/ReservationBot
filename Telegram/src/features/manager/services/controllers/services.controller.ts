@@ -38,7 +38,7 @@ export const handleText = async (ctx: ServicesContext) => {
     if (ctx.message && "text" in ctx.message) {
       const text = ctx.message.text.trim();
       if (text && ctx.scene.session.serviceId) {
-        await service.updateServiceData(ctx.scene.session.serviceId, { name: text });
+        await service.updateServiceData(ctx.scene.session.serviceId, { name: text }, ctx.from!.id);
         await view.showSuccess(ctx, ServicesMessages.nameUpdated);
       }
     }
@@ -61,7 +61,7 @@ export const handleCategory = async (ctx: ServicesContext) => {
   await ctx.answerCbQuery().catch(() => {});
   const catId = ctx.match[1] === "none" ? null : parseInt(ctx.match[1]);
   if (ctx.scene.session.serviceId) {
-    await service.updateServiceData(ctx.scene.session.serviceId, { categoryId: catId });
+    await service.updateServiceData(ctx.scene.session.serviceId, { categoryId: catId }, ctx.from!.id);
   }
   await view.showSuccess(ctx, ServicesMessages.categoryUpdated);
   ctx.scene.session.action = "menu";
@@ -77,7 +77,7 @@ export const handleDuration = async (ctx: ServicesContext) => {
   await ctx.answerCbQuery().catch(() => {});
   const duration = parseInt(ctx.match[1]);
   if (ctx.scene.session.serviceId) {
-    await service.updateServiceData(ctx.scene.session.serviceId, { duration });
+    await service.updateServiceData(ctx.scene.session.serviceId, { duration }, ctx.from!.id);
   }
   await view.showSuccess(ctx, ServicesMessages.durationUpdated);
   ctx.scene.session.action = "menu";
@@ -108,7 +108,7 @@ export const saveDays = async (ctx: ServicesContext) => {
   const draft = ctx.scene.session.draftDays;
   if (!draft || draft.length === 0) return view.showError(ctx, ServicesMessages.pleaseSelectAtLeastOneDay);
   if (ctx.scene.session.serviceId) {
-    await service.updateServiceData(ctx.scene.session.serviceId, { days: JSON.stringify(draft) });
+    await service.updateServiceData(ctx.scene.session.serviceId, { days: JSON.stringify(draft) }, ctx.from!.id);
   }
   await view.showSuccess(ctx, ServicesMessages.daysUpdated);
   ctx.scene.session.action = "menu";
@@ -118,7 +118,7 @@ export const saveDays = async (ctx: ServicesContext) => {
 export const deleteSvc = async (ctx: ServicesContext) => {
   await ctx.answerCbQuery().catch(() => {});
   if (ctx.scene.session.serviceId) {
-    await service.removeService(ctx.scene.session.serviceId);
+    await service.removeService(ctx.scene.session.serviceId, ctx.from!.id);
   }
   await view.showSuccess(ctx, ServicesMessages.serviceDeleted);
   await ctx.scene.enter("MANAGER_DASHBOARD_SCENE");

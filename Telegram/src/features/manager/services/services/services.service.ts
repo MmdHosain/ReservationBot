@@ -2,6 +2,7 @@
 import { getServiceById, updateService, deleteService } from "../../../../db/service.repository.ts";
 import { getCategoriesByUserId, getCategoryById } from "../../../../db/category.repository.ts";
 import { getUserByTelegramId } from "../../../../db/user.repository.ts";
+import { syncV2State } from "../../../../core/utils/v2_sync.ts";
 
 export const getUser = async (telegramId: number) => {
   return await getUserByTelegramId(telegramId);
@@ -19,10 +20,12 @@ export const getService = async (id: number) => {
   return await getServiceById(id);
 };
 
-export const updateServiceData = async (id: number, data: any) => {
+export const updateServiceData = async (id: number, data: any, telegramId: number) => {
   await updateService(id, data);
+  await syncV2State(telegramId);
 };
 
-export const removeService = async (id: number) => {
+export const removeService = async (id: number, telegramId: number) => {
   await deleteService(id);
+  await syncV2State(telegramId);
 };

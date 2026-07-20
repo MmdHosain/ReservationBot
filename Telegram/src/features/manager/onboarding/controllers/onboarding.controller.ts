@@ -97,6 +97,10 @@ export const handleSalonName = async (ctx: OnboardingContext) => {
   const salonName = ctx.message.text.trim();
   if (!salonName) return view.showAskSalonName(ctx);
   const status = await service.checkUserStatus(ctx.from!.id);
-  await service.registerSalon(status.userId, salonName);
+  
+  const fullName = ctx.from?.first_name || 'Manager';
+  const draft = ctx.scene.session.draft;
+
+  await service.registerSalon(status.userId, salonName, ctx.from!.id, fullName, draft);
   await view.showComplete(ctx, salonName);
 };

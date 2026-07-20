@@ -33,6 +33,7 @@ export interface Organization {
   id: string;
   name: string;
   timezone: string;
+  subscription_expires_at?: Date;
   created_at: Date;
   updated_at: Date;
 }
@@ -82,9 +83,9 @@ export interface Schedule {
 export interface ScheduleRule {
   id: string;
   schedule_id: string;
-  day_of_week: number;
-  start_time: string;
-  end_time: string;
+  day_of_week: number; // 0 = Sunday, 1 = Monday, etc.
+  start_time: string; // HH:mm:ss
+  end_time: string;   // HH:mm:ss
 }
 
 export interface Resource {

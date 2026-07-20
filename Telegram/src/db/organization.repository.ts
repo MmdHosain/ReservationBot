@@ -37,3 +37,14 @@ export async function getOrganizationsForUser(userId: string): Promise<(Organiza
   );
   return res.rows;
 }
+
+export async function getOrganizationByTelegramId(telegramId: number): Promise<Organization | null> {
+  const res = await pool.query(
+    `SELECT o.* FROM organizations o 
+     JOIN organization_members om ON o.id = om.organization_id 
+     JOIN users u ON om.user_id = u.id 
+     WHERE u.telegram_id = $1 AND om.role = 'admin'`,
+    [telegramId]
+  );
+  return res.rows[0] || null;
+}
