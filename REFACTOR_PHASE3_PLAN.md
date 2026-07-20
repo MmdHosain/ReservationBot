@@ -31,10 +31,12 @@ Now that Phase 2 (V2 Repositories) is complete side-by-side with the old ones, w
 
 ---
 
-## Conclusion & Next Steps
+## Conclusion & Testing (Done ✅)
 The Monorepo has successfully been refactored to support a multi-tenant architecture while maintaining 100% backward compatibility via dual-writing. 
 
-**To fully sunset V1:**
+Check `V2_MIGRATION_TESTING.md` for specific instructions on how to test the Dual-Write implementations and the V2 Engine.
+
+**To fully sunset V1 (Future Action):**
 1. Run a data migration script to port legacy `users` to `organizations` and `users_v2` for existing accounts.
 2. Swap reads in dashboards from `appointments` to `events`.
 3. Drop `appointments`, `services`, and `users` tables.

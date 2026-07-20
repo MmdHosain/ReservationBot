@@ -1,3 +1,4 @@
+import "reflect-metadata";
 import "dotenv/config";
 import { startTelegramBot } from "./Telegram/src/bot.ts";
 import { startInstagramBot } from "./Instagram/src/index.ts";
