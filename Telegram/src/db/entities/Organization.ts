@@ -12,6 +12,15 @@ export class Organization {
   @Column("varchar", { default: 'UTC' })
   timezone!: string;
 
+  @Column("varchar", { default: 'beauty' }) 
+  business_category!: string;
+
+  @Column("int", { nullable: true }) 
+  deposit_amount!: number | null;
+
+  @Column("timestamp", { nullable: true })
+  onboarded_at!: Date | null;
+
   @Column("timestamp", { nullable: true })
   subscription_expires_at!: Date | null;
 

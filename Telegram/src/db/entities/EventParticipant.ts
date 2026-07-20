@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from "typeorm";
 import { Event } from "./Event.ts";
-import { UserV2 } from "./UserV2.ts";
+import { User } from "./User.ts";
 import { ParticipantRole } from "../types.ts";
 
 @Entity("event_participants")
@@ -12,9 +12,9 @@ export class EventParticipant {
   @JoinColumn({ name: "event_id" })
   event!: Event;
 
-  @ManyToOne(() => UserV2, { onDelete: "CASCADE" })
+  @ManyToOne(() => User, { onDelete: "CASCADE" })
   @JoinColumn({ name: "user_id" })
-  user!: UserV2;
+  user!: User;
 
   @Column({ type: "enum", enum: ParticipantRole })
   role!: ParticipantRole;

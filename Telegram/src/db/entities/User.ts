@@ -1,8 +1,14 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany } from "typeorm";
 import { OrganizationMember } from "./OrganizationMember.ts";
 
-@Entity("users_v2")
-export class UserV2 {
+// Transformer to safely handle PostgreSQL bigint returned as strings in JS
+const parseIntTransformer = {
+  to: (value: any) => value,
+  from: (value: any) => parseInt(value, 10)
+};
+
+@Entity("users_unified")
+export class User {
   @PrimaryGeneratedColumn("uuid")
   id!: string;
 
@@ -15,11 +21,14 @@ export class UserV2 {
   @Column("varchar", { nullable: true })
   phone!: string;
 
-  @Column("bigint", { unique: true, nullable: true })
+  @Column("bigint", { unique: true, nullable: true, transformer: parseIntTransformer })
   telegram_id!: number;
 
   @Column("varchar", { length: 100, unique: true, nullable: true })
   instagram_id!: string;
+
+  @Column("varchar", { default: 'shamsi' })
+  calendar_type!: string;
 
   @CreateDateColumn()
   created_at!: Date;

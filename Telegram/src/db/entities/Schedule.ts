@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from "typeorm";
 import { Organization } from "./Organization.ts";
-import { UserV2 } from "./UserV2.ts";
+import { User } from "./User.ts";
 
 @Entity("schedules")
 export class Schedule {
@@ -11,9 +11,9 @@ export class Schedule {
   @JoinColumn({ name: "organization_id" })
   organization!: Organization;
 
-  @ManyToOne(() => UserV2, { onDelete: "CASCADE", nullable: true })
+  @ManyToOne(() => User, { onDelete: "CASCADE", nullable: true })
   @JoinColumn({ name: "user_id" })  
-  user!: UserV2 | null;
+  user!: User | null;
 
   @Column("varchar")
   name!: string;

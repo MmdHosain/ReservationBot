@@ -1,5 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from "typeorm";
 import { Organization } from "./Organization.ts";
+import { Category } from "./Category.ts";
 
 @Entity("event_types")
 export class EventType {
@@ -9,6 +10,10 @@ export class EventType {
   @ManyToOne(() => Organization, { onDelete: "CASCADE" })
   @JoinColumn({ name: "organization_id" })
   organization!: Organization;
+
+  @ManyToOne(() => Category, cat => cat.event_types, { onDelete: "SET NULL", nullable: true })
+  @JoinColumn({ name: "category_id" })
+  category!: Category | null;
 
   @Column("varchar")
   name!: string;

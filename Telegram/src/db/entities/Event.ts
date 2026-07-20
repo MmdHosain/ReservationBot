@@ -43,6 +43,12 @@ export class Event {
   @Column("timestamp", { nullable: true })
   actual_end_time!: Date | null;
 
+  @Column("boolean", { default: false }) 
+  reminded_24h!: boolean;
+
+  @Column("boolean", { default: false }) 
+  reminded_2h!: boolean;
+
   @CreateDateColumn()
   created_at!: Date;
 

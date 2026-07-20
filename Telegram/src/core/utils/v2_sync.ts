@@ -9,16 +9,16 @@ import { EventType } from "../../db/entities/EventType.ts";
 import { ScheduleRule } from "../../db/entities/ScheduleRule.ts";
 
 /**
- * Bridges V1 data changes (Work Hours, Breaks, Services) to the new V2 DBML schema (Schedules, Event Types).
+ * Bridges V1 data changes (Work Hours, Breaks, Services) to the new Unified DBML schema (Schedules, Event Types).
  * This guarantees dual-write consistency during the migration phase.
  */
 export async function syncV2State(telegramId: number) {
     try {
         const org = await getOrganizationByTelegramId(telegramId);
         const v1User = await getV1User(telegramId);
-        const v2User = await getV2User(telegramId);
+        const unifiedUser = await getV2User(telegramId);
         
-        if (!org || !v1User || !v2User) return;
+        if (!org || !v1User || !unifiedUser) return;
 
         // 1. Sync Event Types (Services)
         const v1Services = await getServicesByUserId(v1User.id);
@@ -26,7 +26,7 @@ export async function syncV2State(telegramId: number) {
         await AppDataSource.getRepository(EventType).delete({ organization: { id: org.id } });
         for (const svc of v1Services) {
             const et = await createEventType(org.id, svc.name, svc.duration);
-            await linkUserToEventType(v2User.id, et.id);
+            await linkUserToEventType(unifiedUser.id, et.id);
         }
 
         // 2. Sync Schedules & Rules (Working Hours & Breaks)
@@ -67,6 +67,6 @@ export async function syncV2State(telegramId: number) {
             }
         }
     } catch(e) {
-        console.error("❌ [V2 Sync] Failed to sync state for", telegramId, e);
+        console.error("❌ [Unified Sync] Failed to sync state for", telegramId, e);
     }
 }

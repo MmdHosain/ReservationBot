@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from "typeorm";
 import { Organization } from "./Organization.ts";
-import { UserV2 } from "./UserV2.ts";
+import { User } from "./User.ts";
 import { UserOrgRole } from "../types.ts";
 
 @Entity("organization_members")
@@ -12,9 +12,9 @@ export class OrganizationMember {
   @JoinColumn({ name: "organization_id" })
   organization!: Organization;
 
-  @ManyToOne(() => UserV2, user => user.organization_members, { onDelete: "CASCADE" })
+  @ManyToOne(() => User, user => user.organization_members, { onDelete: "CASCADE" })
   @JoinColumn({ name: "user_id" })
-  user!: UserV2;
+  user!: User;
 
   @Column({ type: "enum", enum: UserOrgRole })
   role!: UserOrgRole;

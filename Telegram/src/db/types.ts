@@ -33,7 +33,10 @@ export interface Organization {
   id: string;
   name: string;
   timezone: string;
-  subscription_expires_at?: Date;
+  business_category: string;
+  deposit_amount?: number | null;
+  onboarded_at?: Date | null;
+  subscription_expires_at?: Date | null;
   created_at: Date;
   updated_at: Date;
 }
@@ -45,6 +48,7 @@ export interface User {
   phone?: string;
   telegram_id?: number;
   instagram_id?: string;
+  calendar_type: string;
   created_at: Date;
 }
 
@@ -56,9 +60,17 @@ export interface OrganizationMember {
   is_active: boolean;
 }
 
+export interface Category {
+  id: string;
+  organization_id: string;
+  name: string;
+  created_at: Date;
+}
+
 export interface EventType {
   id: string;
   organization_id: string;
+  category_id?: string | null;
   name: string;
   duration_minutes: number;
   buffer_minutes: number;
@@ -121,6 +133,8 @@ export interface Event {
   queue_number?: number;
   actual_start_time?: Date;
   actual_end_time?: Date;
+  reminded_24h: boolean;
+  reminded_2h: boolean;
   created_at: Date;
   updated_at: Date;
 }
@@ -135,4 +149,28 @@ export interface EventParticipant {
 export interface EventResource {
   event_id: string;
   resource_id: string;
+}
+
+export interface TransactionV2 {
+  id: string;
+  organization_id: string;
+  user_id?: string | null;
+  amount: number;
+  package_days: number;
+  status: string;
+  receipt_photo_id?: string | null;
+  authority?: string | null;
+  created_at: Date;
+  updated_at: Date;
+}
+
+export interface InboxMessageV2 {
+  id: string;
+  organization_id: string;
+  customer_id: string;
+  sender_name: string;
+  content: string;
+  sender_type: string;
+  is_read: boolean;
+  created_at: Date;
 }
