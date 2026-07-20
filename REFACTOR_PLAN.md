@@ -7,15 +7,16 @@ Because this refactor touches almost every layer of the application (Database In
 
 ---
 
-## Phase 1: Database Foundation
-- [ ] **1.1 Define Enums & Schema Init** 
-  - Update `Telegram/src/db/index.ts`.
-  - Add SQL scripts to create new ENUM types (`user_org_role`, `booking_mode`, `event_status`, `participant_role`).
-  - Define the new tables (`organizations`, `users`, `organization_members`, `event_types`, `user_event_types`, `schedules`, `schedule_rules`, `schedule_exceptions`, `events`, `event_participants`, `resources`, `event_resources`).
-- [ ] **1.2 Connection & Types Update**
-  - Create explicit TypeScript interfaces for the new database entities in a centralized types folder (`src/core/types.ts` or `src/db/types.ts`).
+## Phase 1: Database Foundation (Done ✅)
+- [x] **1.1 Define Enums & Schema Init** 
+  - Extracted SQL schema to `Telegram/src/db/schema.ts`.
+  - Added robust ENUM creation blocks for `user_org_role`, `booking_mode`, `event_status`, and `participant_role`.
+  - Set up `organizations`, `users`, `organization_members`, `event_types`, `user_event_types`, `schedules`, `schedule_rules`, `schedule_exceptions`, `events`, `event_participants`, `resources`, `event_resources` tables.
+  - Replaced flat `index.ts` table logic with modular `schema.ts` execution.
+- [x] **1.2 Connection & Types Update**
+  - Created `Telegram/src/db/types.ts` containing strict TypeScript interfaces representing the new SQL tables.
 
-## Phase 2: Data Access Layer (Repositories)
+## Phase 2: Data Access Layer (Repositories) (Next Steps)
 - [ ] **2.1 Users & Organizations**
   - Rewrite `user.repository.ts` to handle creating a `user` and linking them to an `organization` via `organization_members`.
 - [ ] **2.2 Event Types & Capabilities**
