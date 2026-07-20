@@ -16,22 +16,19 @@ Because this refactor touches almost every layer of the application (Database In
 - [x] **1.2 Connection & Types Update**
   - Created `Telegram/src/db/types.ts` containing strict TypeScript interfaces representing the new SQL tables.
 
-## Phase 2: Data Access Layer (Repositories) (Next Steps)
-- [ ] **2.1 Users & Organizations**
-  - Rewrite `user.repository.ts` to handle creating a `user` and linking them to an `organization` via `organization_members`.
-- [ ] **2.2 Event Types & Capabilities**
-  - Rewrite `service.repository.ts` into `event_type.repository.ts`.
-  - Map old "services" to `event_types` and link them to users via `user_event_types`.
-- [ ] **2.3 Scheduling Engine**
-  - Create `schedule.repository.ts` to manage `schedules`, `schedule_rules`, and `schedule_exceptions`.
-  - Replace the old `work_start_time`, `work_end_time`, and `break_time` columns with `schedule_rules`.
-- [ ] **2.4 Events & Appointments**
-  - Rewrite `appointment.repository.ts` into `event.repository.ts`.
-  - Implement creation of `events` and mapping `event_participants` (linking the host/staff and the attendee/customer).
-- [ ] **2.5 Resources (New Feature)**
-  - Create `resource.repository.ts` for managing physical resources like chairs, rooms, or equipment.
+## Phase 2: Data Access Layer (Repositories) (Done ✅)
+- [x] **2.1 Users & Organizations**
+  - Created `user_v2.repository.ts` and `organization.repository.ts` to handle creating a `user` and linking them to an `organization` via `organization_members`.
+- [x] **2.2 Event Types & Capabilities**
+  - Created `event_type.repository.ts` mapped to `event_types` and `user_event_types`.
+- [x] **2.3 Scheduling Engine**
+  - Created `schedule.repository.ts` to manage `schedules`, `schedule_rules`, and `schedule_exceptions`.
+- [x] **2.4 Events & Appointments**
+  - Created `event.repository.ts` mapped to `events` and `event_participants`.
+- [x] **2.5 Resources (New Feature)**
+  - Created `resource.repository.ts` for managing physical resources like chairs, rooms, or equipment.
 
-## Phase 3: Core Domain & Booking Logic
+## Phase 3: Core Domain & Booking Logic (Next Steps)
 - [ ] **3.1 Availability Engine (`src/core/utils/booking.ts`)**
   - Refactor `getAvailableDays` and `getAvailableSlots` to dynamically query the new `schedules` and `schedule_rules` rather than parsing static JSON arrays.
   - Include logic to account for `schedule_exceptions` (e.g., holidays, sick leaves).
