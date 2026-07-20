@@ -23,9 +23,11 @@ export const startTelegramBot = async () => {
   bot.use(stage.middleware());
   bot.use(botHandlers);
 
-  // --- Global Telegraf Error Handler ---
   bot.catch((err: unknown, ctx: MyContext) => {
-    console.error(`❌ [Bot Error] Error for update ${ctx.update?.update_id}:`, err);
+    console.error(
+      `❌ [Bot Error] Error for update ${ctx.update?.update_id}:`,
+      err
+    );
     try {
       ctx.reply(MESSAGES.globalError).catch(() => {});
     } catch (e) {
@@ -33,13 +35,11 @@ export const startTelegramBot = async () => {
     }
   });
 
-  // Initialize Shared DB before accepting requests
   await initDB();
   startCronJobs(bot);
 
   launchBot(bot, token);
 
-  // Enable graceful stop
   process.once("SIGINT", () => bot.stop("SIGINT"));
   process.once("SIGTERM", () => bot.stop("SIGTERM"));
 };
