@@ -29,14 +29,14 @@ export const handleStartCommand = async (ctx: MyContext) => {
        if (org) {
          ctx.orgId = org.id;
          if (org.business_category) targetCategory = org.business_category;
+         
+         await ctx.scene.enter("CUSTOMER_SALON_DASHBOARD_SCENE", { 
+           salonId: org.id,
+           salonName: org.name,
+           category: targetCategory
+         });
+         return;
        }
-       
-       await ctx.scene.enter("CUSTOMER_SALON_DASHBOARD_SCENE", { 
-         salonId: owner.id, 
-         salonName: owner.salon_name,
-         category: targetCategory
-       });
-       return;
     }
   }
 

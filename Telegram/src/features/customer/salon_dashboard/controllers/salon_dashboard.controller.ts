@@ -3,7 +3,7 @@ import type { MyContext } from "../../../../core/types.ts";
 import * as view from "../views/salon_dashboard.view.ts";
 
 export const handleEnter = async (ctx: MyContext) => {
-  const state = ctx.scene.state as { salonId: number, salonName: string, category?: string };
+  const state = ctx.scene.state as { salonId: string, salonName: string, category?: string };
   (ctx.scene.session as any).salonId = state.salonId;
   (ctx.scene.session as any).salonName = state.salonName;
   (ctx.scene.session as any).category = state.category || 'generic';

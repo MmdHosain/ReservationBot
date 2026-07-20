@@ -50,12 +50,22 @@ export const handleReserve = async (ctx: MyContext) => {
   const salon = salons.find((s: any) => s.salon_user_id === salonUserId);
   if (salon) {
     let category = 'generic';
+    let targetOrgId = '';
     if (salon.salon_telegram_id) {
       const org = await getOrganizationByTelegramId(salon.salon_telegram_id);
-      if (org) category = org.business_category || 'generic';
+      if (org) {
+        category = org.business_category || 'generic';
+        targetOrgId = org.id;
+      }
     }
+    
+    if (!targetOrgId) {
+        await ctx.answerCbQuery("این مجموعه هنوز سیستم رزرو جدید را فعال نکرده است.", { show_alert: true });
+        return;
+    }
+    
     await ctx.scene.enter("CUSTOMER_BOOKING_WIZARD_SCENE", {
-      salonId: salon.salon_user_id,
+      salonId: targetOrgId,
       salonName: salon.salon_name || "مجموعه",
       category
     });

@@ -5,14 +5,14 @@ import * as view from "../views/categories.view.ts";
 import { CategoriesMessages } from "../views/categories.messages.ts";
 
 export const handleEnter = async (ctx: CategoriesContext) => {
-  const user = await service.getUser(ctx.from!.id);
-  ctx.scene.session.userId = user.id;
+  if (!ctx.orgId) return;
+  ctx.scene.session.orgId = ctx.orgId;
   ctx.scene.session.action = "list";
   await handleList(ctx);
 };
 
 export const handleList = async (ctx: CategoriesContext) => {
-  const categories = await service.getCategories(ctx.scene.session.userId!);
+  const categories = await service.getCategories(ctx.scene.session.orgId!);
   await view.showList(ctx, categories);
 };
 
@@ -24,8 +24,8 @@ export const handleAddCat = async (ctx: CategoriesContext) => {
 
 export const handleEditCat = async (ctx: CategoriesContext) => {
   await ctx.answerCbQuery();
-  ctx.scene.session.categoryId = parseInt(ctx.match[1]);
-  const cat = await service.getCategory(ctx.scene.session.categoryId);
+  ctx.scene.session.categoryId = ctx.match[1];
+  const cat = await service.getCategory(ctx.scene.session.categoryId!);
   if (cat) {
     ctx.scene.session.action = "editing";
     await view.showCategoryActions(ctx, cat.name);
@@ -53,7 +53,7 @@ export const handleText = async (ctx: CategoriesContext) => {
   const text = ctx.message.text.trim();
   
   if (ctx.scene.session.action === "adding") {
-    await service.addCategory(ctx.scene.session.userId!, text);
+    await service.addCategory(ctx.scene.session.orgId!, text);
     await view.showSuccess(ctx, CategoriesMessages.addSuccess);
     ctx.scene.session.action = "list";
     await handleList(ctx);

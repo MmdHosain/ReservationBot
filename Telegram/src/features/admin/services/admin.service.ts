@@ -1,18 +1,20 @@
 // src/features/admin/services/admin.service.ts
 import { AppDataSource } from "../../../db/orm.config.ts";
-import { V1User, Service, Appointment } from "../../../db/entities/v1/index.ts";
+import { User } from "../../../db/entities/User.ts";
+import { Organization } from "../../../db/entities/Organization.ts";
+import { Event } from "../../../db/entities/Event.ts";
+import { EventType } from "../../../db/entities/EventType.ts";
 
 export const getBotStats = async () => {
-  const userRepo = AppDataSource.getRepository(V1User);
-  const apptRepo = AppDataSource.getRepository(Appointment);
-  const svcRepo = AppDataSource.getRepository(Service);
+  const userRepo = AppDataSource.getRepository(User);
+  const orgRepo = AppDataSource.getRepository(Organization);
+  const eventRepo = AppDataSource.getRepository(Event);
+  const typeRepo = AppDataSource.getRepository(EventType);
 
   const total_users = await userRepo.count();
-  const total_salons = await userRepo.createQueryBuilder("u")
-    .where("u.salon_name IS NOT NULL")
-    .getCount();
-  const total_appointments = await apptRepo.count();
-  const total_services = await svcRepo.count();
+  const total_salons = await orgRepo.count();
+  const total_appointments = await eventRepo.count();
+  const total_services = await typeRepo.count();
 
   return { total_users, total_salons, total_appointments, total_services };
 };

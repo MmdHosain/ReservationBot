@@ -1,6 +1,6 @@
 // src/features/manager/dashboard/services/dashboard.service.ts
 import { getAppointmentsForOwner } from "../../../../db/appointment.repository.ts";
-import { getServicesByUserId } from "../../../../db/service.repository.ts";
+import { getServicesByOrgId } from "../../../../db/service.repository.ts";
 import {
   getUserByTelegramId,
   deleteUserByTelegramId,
@@ -39,8 +39,8 @@ export const getAppointmentsStats = async (
   return { count, list };
 };
 
-export const getServices = async (userId: number) => {
-  return await getServicesByUserId(userId);
+export const getServices = async (orgId: string) => {
+  return await getServicesByOrgId(orgId);
 };
 
 export const restartSalon = async (telegramId: number) => {

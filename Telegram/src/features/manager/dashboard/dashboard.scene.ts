@@ -39,9 +39,9 @@ Scene.action("dash_inbox", async (ctx) => {
   await ctx.scene.enter("MANAGER_INBOX_SCENE");
 });
 Scene.action("dash_guide", controller.handleGuide);
-Scene.action(/edit_svc_(\d+)/, async (ctx) => {
+Scene.action(/edit_svc_(.+)/, async (ctx) => {
   await ctx.answerCbQuery();
-  const serviceId = parseInt(ctx.match[1]);
+  const serviceId = ctx.match[1];
   await ctx.scene.enter("MANAGER_SERVICES_SCENE", { serviceId });
 });
 Scene.action("add_svc", async (ctx) => {

@@ -2,14 +2,14 @@
 import { Context, Scenes } from "telegraf";
 
 export interface BookingSession extends Scenes.SceneSessionData {
-  salonId: number;
+  salonId: string;
   salonName: string;
   category?: string;
   isManager?: boolean;
   targetCustomerId?: number;
   targetCustomerName?: string;
-  viewingCategoryId?: number | 'root';
-  serviceId?: number;
+  viewingCategoryId?: string | 'root';
+  serviceId?: string;
   serviceName?: string;
   duration?: number;
   date?: string;

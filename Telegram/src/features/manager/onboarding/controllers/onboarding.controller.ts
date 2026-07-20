@@ -21,7 +21,7 @@ export const handleStart = async (ctx: OnboardingContext) => {
     ctx.scene.session.step = "ask_business_category";
     await view.showAskBusinessCategory(ctx);
   } else {
-    const categories = await service.getUserCategories(status.userId);
+    const categories = await service.getUserCategories(ctx.from!.id);
     if (categories.length > 0) {
       ctx.scene.session.step = "ask_category";
       await view.showAskCategory(ctx, categories);
@@ -43,7 +43,7 @@ export const handleBusinessCategory = async (ctx: OnboardingContext) => {
 export const handleCategorySelection = async (ctx: OnboardingContext) => {
   await ctx.answerCbQuery().catch(() => {});
   const val = ctx.match[1];
-  ctx.scene.session.draft.categoryId = val === "none" ? null : parseInt(val);
+  ctx.scene.session.draft.categoryId = val === "none" ? null : val;
   ctx.scene.session.step = "ask_service_name";
   await view.showAskServiceName(ctx);
 };
@@ -94,7 +94,10 @@ export const handleConfirmDays = async (ctx: OnboardingContext) => {
   }
   await ctx.answerCbQuery().catch(() => {});
   const status = await service.checkUserStatus(ctx.from!.id);
-  await service.createService(status.userId, draft.serviceName, draft.duration, draft.daysOfWeek, draft.categoryId);
+  
+  if (status.hasSalonName) {
+    await service.createService(ctx.from!.id, draft.serviceName, draft.duration, draft.daysOfWeek, draft.categoryId);
+  }
   
   await view.showConfirmation(ctx, draft.serviceName, draft.duration, draft.daysOfWeek, !status.hasSalonName);
   

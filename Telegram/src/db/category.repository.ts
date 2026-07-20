@@ -1,30 +1,29 @@
-// src/db/category.repository.ts
 import { AppDataSource } from "./orm.config.ts";
-import { ServiceCategory } from "./entities/v1/index.ts";
+import { Category } from "./entities/Category.ts";
 
-const repo = AppDataSource.getRepository(ServiceCategory);
+const repo = AppDataSource.getRepository(Category);
 
-export async function createCategory(userId: number, name: string) {
-  const cat = repo.create({ user_id: userId, name });
+export async function createCategory(orgId: string, name: string) {
+  const cat = repo.create({ organization: { id: orgId }, name });
   return await repo.save(cat);
 }
 
-export async function getCategoriesByUserId(userId: number) {
+export async function getCategoriesByOrgId(orgId: string) {
   return await repo.find({ 
-    where: { user_id: userId }, 
+    where: { organization: { id: orgId } }, 
     order: { created_at: "ASC" } 
   });
 }
 
-export async function getCategoryById(id: number) {
+export async function getCategoryById(id: string) {
   return await repo.findOneBy({ id });
 }
 
-export async function updateCategory(id: number, name: string) {
+export async function updateCategory(id: string, name: string) {
   await repo.update(id, { name });
   return await getCategoryById(id);
 }
 
-export async function deleteCategory(id: number) {
+export async function deleteCategory(id: string) {
   await repo.delete(id);
 }

@@ -11,7 +11,7 @@ Scene.use(subscriptionGuard);
 
 Scene.enter(controller.handleEnter);
 Scene.action("add_cat", controller.handleAddCat);
-Scene.action(/edit_cat_(\d+)/, controller.handleEditCat);
+Scene.action(/edit_cat_(.+)/, controller.handleEditCat);
 Scene.action("rename_cat", controller.handleRenameCat);
 Scene.action("delete_cat", controller.handleDeleteCat);
 Scene.action("back_list", async (ctx) => {

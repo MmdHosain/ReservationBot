@@ -4,7 +4,7 @@ export interface OnboardingDraft {
   serviceName?: string;
   duration?: number;
   daysOfWeek?: string[];
-  categoryId?: number | null;
+  categoryId?: string | null;
   businessCategory?: string;
 }
 export interface OnboardingSession extends Scenes.SceneSessionData {

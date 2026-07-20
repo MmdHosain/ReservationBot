@@ -1,13 +1,13 @@
 // src/features/manager/onboarding/services/onboarding.service.ts
 import { getOrCreateUser, markUserOnboarded, updateSalonName, startFreeTrial } from "../../../../db/user.repository.ts";
 import { saveService } from "../../../../db/service.repository.ts";
-import { getCategoriesByUserId } from "../../../../db/category.repository.ts";
+import { getCategoriesByOrgId } from "../../../../db/category.repository.ts";
 
 // V2 Imports
 import { AppDataSource } from "../../../../db/orm.config.ts";
 import { Organization } from "../../../../db/entities/Organization.ts";
 import { getOrCreateUserByTelegramId } from "../../../../db/user_v2.repository.ts";
-import { createOrganization, addOrganizationMember } from "../../../../db/organization.repository.ts";
+import { createOrganization, addOrganizationMember, getOrganizationByTelegramId } from "../../../../db/organization.repository.ts";
 import { createEventType, linkUserToEventType } from "../../../../db/event_type.repository.ts";
 import { createSchedule, createScheduleRule } from "../../../../db/schedule.repository.ts";
 import { UserOrgRole } from "../../../../db/types.ts";
@@ -17,12 +17,17 @@ export const checkUserStatus = async (telegramId: number) => {
   return { isNewUser: !user.onboarded_at, hasSalonName: !!user.salon_name, userId: user.id };
 };
 
-export const getUserCategories = async (userId: number) => {
-  return await getCategoriesByUserId(userId);
+export const getUserCategories = async (telegramId: number) => {
+  const org = await getOrganizationByTelegramId(telegramId);
+  if (!org) return [];
+  return await getCategoriesByOrgId(org.id);
 };
 
-export const createService = async (userId: number, name: string, duration: number, days: string[], categoryId?: number | null) => {
-  await saveService(userId, { name, duration, days: JSON.stringify(days), categoryId });
+export const createService = async (telegramId: number, name: string, duration: number, days: string[], categoryId?: string | null) => {
+  const org = await getOrganizationByTelegramId(telegramId);
+  if (org) {
+    await saveService(org.id, { name, duration, categoryId });
+  }
 };
 
 export const registerSalon = async (userId: number, salonName: string, telegramId: number, fullName: string, draft: any) => {

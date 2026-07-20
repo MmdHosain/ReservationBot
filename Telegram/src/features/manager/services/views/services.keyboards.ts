@@ -1,6 +1,6 @@
 // src/features/manager/services/views/services.keyboards.ts
 import { Markup } from "telegraf";
-import { ServicesMessages, DAYS_IRANIAN } from "./services.messages.ts";
+import { ServicesMessages } from "./services.messages.ts";
 
 export const buildMenuKeyboard = () => Markup.inlineKeyboard([
   [
@@ -9,7 +9,6 @@ export const buildMenuKeyboard = () => Markup.inlineKeyboard([
   ],
   [
     Markup.button.callback(ServicesMessages.editCategoryBtn, "edit_category"),
-    Markup.button.callback(ServicesMessages.editDaysBtn, "edit_days"),
   ],
   [Markup.button.callback(ServicesMessages.deleteServiceBtn, "delete_service")],
   [Markup.button.callback(ServicesMessages.backDashBtn, "back_dash")],
@@ -37,16 +36,3 @@ export const buildDurationKeyboard = () => Markup.inlineKeyboard([
   ],
   [Markup.button.callback(ServicesMessages.menuBtn, "menu")],
 ]);
-
-export const buildDaysKeyboard = (draftDays: string[]) => {
-  const dayButtons = DAYS_IRANIAN.map((d) => {
-    const isSelected = draftDays.includes(d);
-    const label = isSelected ? ServicesMessages.daySelectedMark(d) : d;
-    return Markup.button.callback(label, `day_${d}`);
-  });
-  return Markup.inlineKeyboard([
-    ...dayButtons.map((btn) => [btn]),
-    [Markup.button.callback(ServicesMessages.confirmAndSaveBtn, "confirm_days")],
-    [Markup.button.callback(ServicesMessages.menuBtn, "menu")],
-  ]);
-};

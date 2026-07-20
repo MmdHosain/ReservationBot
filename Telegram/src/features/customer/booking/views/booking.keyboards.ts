@@ -9,7 +9,7 @@ export const buildRootServicesKeyboard = (categories: any[], uncategorizedServic
     buttons.push([Markup.button.callback(`📁 ${c.name}`, `select_cat_${c.id}`)]);
   });
   uncategorizedServices.forEach(s => {
-    buttons.push([Markup.button.callback(`✂️ ${s.name} (${s.duration} دقیقه)`, `select_svc_${s.id}`)]);
+    buttons.push([Markup.button.callback(`✂️ ${s.name} (${s.duration_minutes} دقیقه)`, `select_svc_${s.id}`)]);
   });
   buttons.push([Markup.button.callback(m.cancelBtn, "cancel_booking")]);
   return Markup.inlineKeyboard(buttons);
@@ -17,7 +17,7 @@ export const buildRootServicesKeyboard = (categories: any[], uncategorizedServic
 
 export const buildCategoryServicesKeyboard = (services: any[], categoryStr: string = 'generic') => {
   const m = getBookingMessages(categoryStr);
-  const buttons = services.map(s => [Markup.button.callback(`✂️ ${s.name} (${s.duration} دقیقه)`, `select_svc_${s.id}`)]);
+  const buttons = services.map(s => [Markup.button.callback(`✂️ ${s.name} (${s.duration_minutes} دقیقه)`, `select_svc_${s.id}`)]);
   buttons.push([Markup.button.callback(m.backToCategoriesBtn, "back_to_cats")]);
   buttons.push([Markup.button.callback(m.cancelBtn, "cancel_booking")]);
   return Markup.inlineKeyboard(buttons);

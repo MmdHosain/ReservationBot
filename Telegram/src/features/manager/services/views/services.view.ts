@@ -1,10 +1,10 @@
 // src/features/manager/services/views/services.view.ts
 import { ServicesMessages } from "./services.messages.ts";
-import { buildMenuKeyboard, buildBackToMenuKeyboard, buildCategoryKeyboard, buildDurationKeyboard, buildDaysKeyboard } from "./services.keyboards.ts";
+import { buildMenuKeyboard, buildBackToMenuKeyboard, buildCategoryKeyboard, buildDurationKeyboard } from "./services.keyboards.ts";
 import type { ServicesContext } from "../types/services.types.ts";
 
-export const showMenu = async (ctx: ServicesContext, name: string, duration: number, days: string[], catName: string) => {
-  const msg = ServicesMessages.editTitle(name, duration, days.join("، "), catName);
+export const showMenu = async (ctx: ServicesContext, name: string, duration: number, catName: string) => {
+  const msg = ServicesMessages.editTitle(name, duration, catName);
   const kb = buildMenuKeyboard();
   if (ctx.callbackQuery) await ctx.editMessageText(msg, kb).catch(() => {});
   else await ctx.reply(msg, kb);
@@ -20,11 +20,6 @@ export const showAskCategory = async (ctx: ServicesContext, categories: any[]) =
 
 export const showAskDuration = async (ctx: ServicesContext) => {
   await ctx.editMessageText(ServicesMessages.askServiceDuration, buildDurationKeyboard()).catch(() => {});
-};
-
-export const showAskDays = async (ctx: ServicesContext, draftDays: string[]) => {
-  const selectedText = draftDays.length > 0 ? ServicesMessages.selectedDays(draftDays.join("، ")) : "";
-  await ctx.editMessageText(ServicesMessages.chooseDayPrompt(selectedText), buildDaysKeyboard(draftDays)).catch(() => {});
 };
 
 export const showSuccess = async (ctx: ServicesContext, text: string) => {

@@ -1,28 +1,10 @@
 // src/features/manager/services/services/services.service.ts
-import { getServiceById, updateService, deleteService } from "../../../../db/service.repository.ts";
-import { getCategoriesByUserId, getCategoryById } from "../../../../db/category.repository.ts";
-import { getUserByTelegramId } from "../../../../db/user.repository.ts";
+import { getServiceById, updateService, deleteService, getServicesByOrgId } from "../../../../db/service.repository.ts";
+import { getCategoriesByOrgId, getCategoryById } from "../../../../db/category.repository.ts";
 
-export const getUser = async (telegramId: number) => {
-  return await getUserByTelegramId(telegramId);
-};
-
-export const getUserCategories = async (userId: number) => {
-  return await getCategoriesByUserId(userId);
-};
-
-export const getCategory = async (id: number) => {
-  return await getCategoryById(id);
-};
-
-export const getService = async (id: number) => {
-  return await getServiceById(id);
-};
-
-export const updateServiceData = async (id: number, data: any, telegramId: number) => {
-  await updateService(id, data);
-};
-
-export const removeService = async (id: number, telegramId: number) => {
-  await deleteService(id);
-};
+export const getOrgCategories = async (orgId: string) => getCategoriesByOrgId(orgId);
+export const getCategory = async (id: string) => getCategoryById(id);
+export const getService = async (id: string) => getServiceById(id);
+export const getOrgServices = async (orgId: string) => getServicesByOrgId(orgId);
+export const updateServiceData = async (id: string, data: any) => updateService(id, data);
+export const removeService = async (id: string) => deleteService(id);
