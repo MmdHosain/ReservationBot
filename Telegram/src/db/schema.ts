@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS organizations (
   updated_at TIMESTAMP DEFAULT NOW()
 );
 
-CREATE TABLE IF NOT EXISTS users (
+CREATE TABLE IF NOT EXISTS users_v2 (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   full_name VARCHAR NOT NULL,
   email VARCHAR UNIQUE,
@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS organization_members (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
-  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES users_v2(id) ON DELETE CASCADE,
   role user_org_role NOT NULL,
   is_active BOOLEAN DEFAULT TRUE,
   UNIQUE(organization_id, user_id)
@@ -66,7 +66,7 @@ CREATE TABLE IF NOT EXISTS event_types (
 
 CREATE TABLE IF NOT EXISTS user_event_types (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+  user_id UUID REFERENCES users_v2(id) ON DELETE CASCADE NOT NULL,
   event_type_id UUID REFERENCES event_types(id) ON DELETE CASCADE NOT NULL,
   UNIQUE(user_id, event_type_id)
 );
@@ -74,7 +74,7 @@ CREATE TABLE IF NOT EXISTS user_event_types (
 CREATE TABLE IF NOT EXISTS schedules (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
-  user_id UUID REFERENCES users(id) ON DELETE CASCADE NULL,
+  user_id UUID REFERENCES users_v2(id) ON DELETE CASCADE NULL,
   name VARCHAR NOT NULL,
   valid_from DATE NOT NULL,
   valid_until DATE NULL
@@ -99,7 +99,7 @@ CREATE TABLE IF NOT EXISTS resources (
 CREATE TABLE IF NOT EXISTS schedule_exceptions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
-  user_id UUID REFERENCES users(id) ON DELETE CASCADE NULL,
+  user_id UUID REFERENCES users_v2(id) ON DELETE CASCADE NULL,
   resource_id UUID REFERENCES resources(id) ON DELETE CASCADE NULL,
   specific_date DATE NOT NULL,
   is_available BOOLEAN NOT NULL,
@@ -128,7 +128,7 @@ CREATE TABLE IF NOT EXISTS events (
 CREATE TABLE IF NOT EXISTS event_participants (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   event_id UUID REFERENCES events(id) ON DELETE CASCADE,
-  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES users_v2(id) ON DELETE CASCADE,
   role participant_role NOT NULL,
   UNIQUE(event_id, user_id)
 );

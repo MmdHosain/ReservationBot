@@ -42,7 +42,7 @@ export async function getOrganizationByTelegramId(telegramId: number): Promise<O
   const res = await pool.query(
     `SELECT o.* FROM organizations o 
      JOIN organization_members om ON o.id = om.organization_id 
-     JOIN users u ON om.user_id = u.id 
+     JOIN users_v2 u ON om.user_id = u.id 
      WHERE u.telegram_id = $1 AND om.role = 'admin'`,
     [telegramId]
   );

@@ -17,7 +17,13 @@ Now that Phase 2 (V2 Repositories) is complete side-by-side with the old ones, w
 - [x] Created `v2_sync.ts` utility to automatically mirror configuration changes from V1 Settings & Services UI directly to the V2 PostgreSQL relational schema.
 - [x] Integrated sync hooks into `services.service.ts` and `settings.service.ts`.
 
-## Step 5: Customer Flow (Phase 4.3 & 4.4) (Next Steps)
-- Deep link resolution to fetch the `organization` instead of `user`.
-- Create V2 `user` for the customer.
-- Insert rows into `events` and `event_participants`.
+## Step 5: Customer Flow (Phase 4.3 & 4.4) (Done ✅)
+- [x] Modified Deep link resolution to fetch the `organization` context on entry.
+- [x] Customer Booking creation now Dual-Writes to the new `events` and `event_participants` table, linking V2 `users_v2` automatically.
+- [x] Cancellations trigger an update across both V1 `appointments` and V2 `events`.
+
+---
+
+## Phase 5: Instagram Microservice Integration
+- [ ] Update Instagram Database Bridge to point to the new Multi-Tenant Schema.
+- [ ] Adapt Instagram Webhook Handlers to allow customers to book directly on Instagram without creating V1 `appointments` (Going purely V2 Event-Driven).
