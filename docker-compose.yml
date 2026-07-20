@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: reservation-bot-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      # Override DB connection to point to the docker-compose 'db' service
+      - DB_HOST=db
+      - DB_PORT=5432
+
+  db:
+    image: postgres:15-alpine
+    container_name: reservation-bot-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASS:-your_db_password}
+      POSTGRES_DB: ${DB_NAME:-my_telegram_bot}
+    ports:
+      - "5433:5432" # Exposed on host as 5433 for backwards compatibility
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-my_telegram_bot}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
