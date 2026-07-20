@@ -16,7 +16,7 @@ export class Event {
   @JoinColumn({ name: "event_type_id" })
   event_type!: EventType | null;
 
-  @Column({ nullable: true })
+  @Column("varchar", { nullable: true })
   title!: string;
 
   @Column("date")

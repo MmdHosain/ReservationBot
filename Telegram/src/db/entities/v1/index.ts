@@ -8,7 +8,7 @@ const parseIntTransformer = {
 
 @Entity("users")
 export class V1User {
-  @PrimaryGeneratedColumn() id!: number;
+  @PrimaryGeneratedColumn("int") id!: number;
   
   @Column("bigint", { unique: true, transformer: parseIntTransformer }) 
   telegram_id!: number;
@@ -16,22 +16,22 @@ export class V1User {
   @Column("timestamp", { nullable: true }) 
   onboarded_at!: Date | null;
   
-  @Column({ nullable: true }) 
+  @Column("varchar", { nullable: true }) 
   salon_name!: string;
   
-  @Column({ default: 'shamsi' }) 
+  @Column("varchar", { default: 'shamsi' }) 
   calendar_type!: string;
   
-  @Column({ nullable: true }) 
+  @Column("varchar", { nullable: true }) 
   work_start_time!: string;
   
-  @Column({ nullable: true }) 
+  @Column("varchar", { nullable: true }) 
   work_end_time!: string;
   
-  @Column({ nullable: true }) 
+  @Column("varchar", { nullable: true }) 
   break_start_time!: string;
   
-  @Column({ nullable: true }) 
+  @Column("varchar", { nullable: true }) 
   break_end_time!: string;
   
   @Column("int", { nullable: true }) 
@@ -43,18 +43,18 @@ export class V1User {
 
 @Entity("services")
 export class Service {
-  @PrimaryGeneratedColumn() id!: number;
+  @PrimaryGeneratedColumn("int") id!: number;
   
   @Column("int") 
   user_id!: number;
   
-  @Column() 
+  @Column("varchar") 
   name!: string;
   
   @Column("int") 
   duration!: number;
   
-  @Column() 
+  @Column("varchar") 
   days!: string;
   
   @Column("int", { nullable: true }) 
@@ -63,7 +63,7 @@ export class Service {
 
 @Entity("appointments")
 export class Appointment {
-  @PrimaryGeneratedColumn() id!: number;
+  @PrimaryGeneratedColumn("int") id!: number;
   
   @Column("int") 
   service_id!: number;
@@ -71,7 +71,7 @@ export class Appointment {
   @Column("bigint", { transformer: parseIntTransformer }) 
   customer_telegram_id!: number;
   
-  @Column() 
+  @Column("varchar") 
   customer_name!: string;
   
   @Column("date") 
@@ -83,24 +83,24 @@ export class Appointment {
   @Column("int", { nullable: true }) 
   staff_id!: number | null;
   
-  @Column({ default: 'confirmed' }) 
+  @Column("varchar", { default: 'confirmed' }) 
   status!: string;
   
-  @Column({ default: false }) 
+  @Column("boolean", { default: false }) 
   reminded_24h!: boolean;
   
-  @Column({ default: false }) 
+  @Column("boolean", { default: false }) 
   reminded_2h!: boolean;
 }
 
 @Entity("service_categories")
 export class ServiceCategory {
-  @PrimaryGeneratedColumn() id!: number;
+  @PrimaryGeneratedColumn("int") id!: number;
   
   @Column("int") 
   user_id!: number;
   
-  @Column() 
+  @Column("varchar") 
   name!: string;
   
   @CreateDateColumn() 
@@ -109,7 +109,7 @@ export class ServiceCategory {
 
 @Entity("customer_salons")
 export class CustomerSalon {
-  @PrimaryGeneratedColumn() id!: number;
+  @PrimaryGeneratedColumn("int") id!: number;
   
   @Column("bigint", { transformer: parseIntTransformer }) 
   customer_telegram_id!: number;
@@ -120,18 +120,18 @@ export class CustomerSalon {
 
 @Entity("staff")
 export class Staff {
-  @PrimaryGeneratedColumn() id!: number;
+  @PrimaryGeneratedColumn("int") id!: number;
   
   @Column("int") 
   user_id!: number;
   
-  @Column() 
+  @Column("varchar") 
   name!: string;
 }
 
 @Entity("transactions")
 export class Transaction {
-  @PrimaryGeneratedColumn() id!: number;
+  @PrimaryGeneratedColumn("int") id!: number;
   
   @Column("int") 
   user_id!: number;
@@ -142,13 +142,13 @@ export class Transaction {
   @Column("int") 
   package_days!: number;
   
-  @Column() 
+  @Column("varchar") 
   status!: string;
   
-  @Column({ nullable: true }) 
+  @Column("varchar", { nullable: true }) 
   receipt_photo_id!: string;
   
-  @Column({ nullable: true }) 
+  @Column("varchar", { nullable: true }) 
   authority!: string;
   
   @CreateDateColumn() 
@@ -160,7 +160,7 @@ export class Transaction {
 
 @Entity("inbox_messages")
 export class InboxMessage {
-  @PrimaryGeneratedColumn() id!: number;
+  @PrimaryGeneratedColumn("int") id!: number;
   
   @Column("int") 
   salon_user_id!: number;
@@ -168,16 +168,16 @@ export class InboxMessage {
   @Column("bigint", { transformer: parseIntTransformer }) 
   customer_telegram_id!: number;
   
-  @Column() 
+  @Column("varchar") 
   sender_name!: string;
   
   @Column("text") 
   content!: string;
   
-  @Column({ default: 'customer' }) 
+  @Column("varchar", { default: 'customer' }) 
   sender_type!: string;
   
-  @Column({ default: false }) 
+  @Column("boolean", { default: false }) 
   is_read!: boolean;
   
   @CreateDateColumn() 

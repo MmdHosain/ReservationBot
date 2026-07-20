@@ -23,7 +23,7 @@ export class ScheduleException {
   @Column("date")
   specific_date!: Date | string;
 
-  @Column()
+  @Column("boolean")
   is_available!: boolean;
 
   @Column("time", { nullable: true })
@@ -32,6 +32,6 @@ export class ScheduleException {
   @Column("time", { nullable: true })
   end_time!: string | null;
 
-  @Column({ nullable: true })
+  @Column("varchar", { nullable: true })
   reason!: string;
 }

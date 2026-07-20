@@ -12,10 +12,10 @@ export class Schedule {
   organization!: Organization;
 
   @ManyToOne(() => UserV2, { onDelete: "CASCADE", nullable: true })
-  @JoinColumn({ name: "user_id" })
+  @JoinColumn({ name: "user_id" })  
   user!: UserV2 | null;
 
-  @Column()
+  @Column("varchar")
   name!: string;
 
   @Column("date")

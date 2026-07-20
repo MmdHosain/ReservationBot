@@ -19,6 +19,6 @@ export class OrganizationMember {
   @Column({ type: "enum", enum: UserOrgRole })
   role!: UserOrgRole;
 
-  @Column({ default: true })
+  @Column("boolean", { default: true })
   is_active!: boolean;
 }

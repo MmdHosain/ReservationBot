@@ -10,12 +10,12 @@ export class Resource {
   @JoinColumn({ name: "organization_id" })
   organization!: Organization;
 
-  @Column()
+  @Column("varchar")
   name!: string;
 
-  @Column({ nullable: true })
+  @Column("varchar", { nullable: true })
   resource_type!: string;
 
-  @Column({ default: true })  
+  @Column("boolean", { default: true })  
   is_active!: boolean;
 }

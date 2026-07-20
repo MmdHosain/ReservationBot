@@ -6,19 +6,19 @@ export class UserV2 {
   @PrimaryGeneratedColumn("uuid")
   id!: string;
 
-  @Column()
+  @Column("varchar")
   full_name!: string;
 
-  @Column({ unique: true, nullable: true })
+  @Column("varchar", { unique: true, nullable: true })
   email!: string;
 
-  @Column({ nullable: true })
+  @Column("varchar", { nullable: true })
   phone!: string;
 
-  @Column({ type: "bigint", unique: true, nullable: true })
+  @Column("bigint", { unique: true, nullable: true })
   telegram_id!: number;
 
-  @Column({ length: 100, unique: true, nullable: true })
+  @Column("varchar", { length: 100, unique: true, nullable: true })
   instagram_id!: string;
 
   @CreateDateColumn()

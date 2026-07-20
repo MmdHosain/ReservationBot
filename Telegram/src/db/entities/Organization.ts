@@ -6,13 +6,13 @@ export class Organization {
   @PrimaryGeneratedColumn("uuid")
   id!: string;
 
-  @Column()
+  @Column("varchar")
   name!: string;
 
-  @Column({ default: 'UTC' })
+  @Column("varchar", { default: 'UTC' })
   timezone!: string;
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column("timestamp", { nullable: true })
   subscription_expires_at!: Date | null;
 
   @CreateDateColumn()

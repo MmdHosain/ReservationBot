@@ -10,7 +10,7 @@ export class EventType {
   @JoinColumn({ name: "organization_id" })
   organization!: Organization;
 
-  @Column()
+  @Column("varchar")
   name!: string;
 
   @Column("int")
@@ -19,6 +19,6 @@ export class EventType {
   @Column("int", { default: 0 })
   buffer_minutes!: number;
 
-  @Column({ default: true })
+  @Column("boolean", { default: true })
   is_active!: boolean;
 }
