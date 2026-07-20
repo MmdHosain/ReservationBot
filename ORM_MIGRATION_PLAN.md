@@ -8,11 +8,12 @@ Migrating from raw SQL (`pg` pool) to **TypeORM** requires a careful, phased app
 - [x] Create TypeORM `DataSource` configuration (`orm.config.ts`).
 - [x] Create foundational V2 Entities: `Organization`, `UserV2`, and `OrganizationMember`.
 
-## Phase 2: Complete V2 Entities & Initialization (Next Steps)
-- [ ] Create remaining V2 Entities: `EventType`, `Schedule`, `ScheduleRule`, `ScheduleException`, `Event`, `EventParticipant`, `Resource`, `EventResource`.
-- [ ] Update `Telegram/src/db/index.ts` to call `AppDataSource.initialize()` alongside the raw SQL pool.
+## Phase 2: Complete V2 Entities & Initialization (Done ✅)
+- [x] Create remaining V2 Entities: `EventType`, `UserEventType`, `Schedule`, `ScheduleRule`, `ScheduleException`, `Event`, `EventParticipant`, `Resource`, `EventResource`.
+- [x] Update `Telegram/src/db/orm.config.ts` to include all V2 entities.
+- [x] Update `Telegram/src/db/index.ts` to call `AppDataSource.initialize()` alongside the raw SQL pool.
 
-## Phase 3: Migrate V2 Repositories to ORM
+## Phase 3: Migrate V2 Repositories to ORM (Next Steps)
 - [ ] Refactor `organization.repository.ts` and `user_v2.repository.ts` to use `AppDataSource.getRepository()` instead of raw SQL.
 - [ ] Refactor `event_type.repository.ts`, `schedule.repository.ts`, and `event.repository.ts`.
 

@@ -3,6 +3,15 @@ import config from "../core/config.ts";
 import { Organization } from "./entities/Organization.ts";
 import { UserV2 } from "./entities/UserV2.ts";
 import { OrganizationMember } from "./entities/OrganizationMember.ts";
+import { EventType } from "./entities/EventType.ts";
+import { UserEventType } from "./entities/UserEventType.ts";
+import { Schedule } from "./entities/Schedule.ts";
+import { ScheduleRule } from "./entities/ScheduleRule.ts";
+import { Resource } from "./entities/Resource.ts";
+import { ScheduleException } from "./entities/ScheduleException.ts";
+import { Event } from "./entities/Event.ts";
+import { EventParticipant } from "./entities/EventParticipant.ts";
+import { EventResource } from "./entities/EventResource.ts";
 
 export const AppDataSource = new DataSource({
   type: "postgres",
@@ -17,8 +26,16 @@ export const AppDataSource = new DataSource({
   entities: [
     Organization,
     UserV2,
-    OrganizationMember
-    // More entities will be added in the next phases
+    OrganizationMember,
+    EventType,
+    UserEventType,
+    Schedule,
+    ScheduleRule,
+    Resource,
+    ScheduleException,
+    Event,
+    EventParticipant,
+    EventResource
   ],
   subscribers: [],
   migrations: [],
