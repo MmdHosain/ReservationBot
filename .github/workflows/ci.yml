@@ -69,36 +69,42 @@ jobs:
             exit 1
           fi
 
-          # 1. Clean & parse SERVER_HOST (handles 'ssh://root@ip:port', 'ip:port', 'ip', etc.)
-          RAW_HOST=$(echo "$SERVER_HOST" | tr -d ' \r\n\t')
-          PARSED_HOST=$(echo "$RAW_HOST" | sed -e 's|^ssh://||' -e 's|^.*@||')
+          # 1. Clean & parse SERVER_USER (strips newlines, carriage returns, quotes, and @domain)
+          CLEAN_USER=$(printf '%s' "${SERVER_USER:-root}" | tr -d '\r\n\t "' | sed -e 's|@.*||')
+          if [ -z "$CLEAN_USER" ]; then
+            TARGET_USER="root"
+          else
+            TARGET_USER="$CLEAN_USER"
+          fi
 
-          if echo "$PARSED_HOST" | grep -q ":"; then
-            PORT_FROM_HOST=$(echo "$PARSED_HOST" | cut -d: -f2)
-            TARGET_HOST=$(echo "$PARSED_HOST" | cut -d: -f1)
+          # 2. Clean & parse SERVER_HOST (handles 'ssh://root@ip:port', 'ip:port', 'ip', newlines, etc.)
+          RAW_HOST=$(printf '%s' "$SERVER_HOST" | tr -d '\r\n\t "')
+          PARSED_HOST=$(printf '%s' "$RAW_HOST" | sed -e 's|^ssh://||' -e 's|^.*@||')
+
+          if printf '%s' "$PARSED_HOST" | grep -q ":"; then
+            PORT_FROM_HOST=$(printf '%s' "$PARSED_HOST" | cut -d: -f2)
+            TARGET_HOST=$(printf '%s' "$PARSED_HOST" | cut -d: -f1)
           else
             PORT_FROM_HOST=""
             TARGET_HOST="$PARSED_HOST"
           fi
 
-          TARGET_PORT="${SERVER_PORT:-${PORT_FROM_HOST:-22}}"
-          TARGET_USER="${SERVER_USER:-root}"
+          CLEAN_PORT=$(printf '%s' "${SERVER_PORT:-${PORT_FROM_HOST:-22}}" | tr -d '\r\n\t "')
+          TARGET_PORT="${CLEAN_PORT:-22}"
 
-          echo "📡 Target VPS: $TARGET_USER@$TARGET_HOST on port $TARGET_PORT"
+          echo "📡 Connecting to: $TARGET_USER@$TARGET_HOST on port $TARGET_PORT"
 
-          # 2. Configure SSH private key
+          # 3. Configure SSH private key safely
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
-          echo "$SERVER_SSH_KEY" > ~/.ssh/id_rsa
-          # Ensure trailing newline
-          sed -i -e '$a\' ~/.ssh/id_rsa
+          printf '%s\n' "$SERVER_SSH_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
 
-          # 3. Connect to VPS and execute Docker deployment
-          ssh -o StrictHostKeyChecking=no -o ConnectTimeout=30 -p "$TARGET_PORT" "$TARGET_USER@$TARGET_HOST" 'bash -s' << 'REMOTE_SCRIPT'
+          # 4. Connect to VPS and execute Docker deployment
+          ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=30 -p "$TARGET_PORT" "$TARGET_USER@$TARGET_HOST" 'bash -s' << 'REMOTE_SCRIPT'
             set -e
             echo "🚀 Successfully authenticated with VPS!"
-            
+
             TARGET_DIR="/root/DEV/reservation-bot"
             if [ ! -d "$TARGET_DIR" ]; then
               echo "📁 Target directory not found. Cloning repository into $TARGET_DIR..."
