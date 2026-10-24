@@ -1,5 +1,6 @@
 services:
   app:
+    image: reservation_bot_instagram-app:latest
     build: .
     container_name: reservation-bot-app
     restart: unless-stopped
@@ -24,7 +25,7 @@ services:
       POSTGRES_PASSWORD: ${DB_PASS:-your_db_password}
       POSTGRES_DB: ${DB_NAME:-my_telegram_bot}
     ports:
-      - "5433:5432" # Exposed on host as 5433 for backwards compatibility
+      - "${HOST_DB_PORT:-5434}:5432" # Uses 5434 by default to avoid collision with other services
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:

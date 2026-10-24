@@ -1,11 +1,14 @@
-name: CI/CD Pipeline
+name: Build and Deploy Reservation Bot
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+    branches:
+      - main
   workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -13,10 +16,10 @@ concurrency:
 
 jobs:
   test:
-    name: 🧪 Unit Tests & Validation
+    name: 🧪 Unit Tests
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repository
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Setup Node.js 20
@@ -25,132 +28,174 @@ jobs:
           node-version: 20
           cache: 'npm'
 
-      - name: Install Dependencies
+      - name: Install dependencies
         run: npm ci
 
       - name: Run Vitest Unit Tests
         run: npm test
 
-  docker:
-    name: 🐳 Docker Build Verification
-    needs: test
+  build-and-push:
+    name: 🐳 Build & Push Docker Image
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repository
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build Docker Image
-        uses: docker/build-push-action@v5
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push bot image
+        uses: docker/build-push-action@v6
         with:
           context: .
-          push: false
-          tags: reservation-bot:latest
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ghcr.io/mmdhosain/reservation-bot:latest
+            ghcr.io/mmdhosain/reservation-bot:${{ github.sha }}
 
   deploy:
-    name: 🚀 Continuous Deployment (VPS Docker)
-    needs: [test, docker]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    name: 🚀 Deploy to VPS via SSH & Docker
+    needs: [test, build-and-push]
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
-    steps:
-      - name: Deploy to VPS via SSH & Run Docker
-        env:
-          SERVER_HOST: ${{ secrets.SERVER_HOST }}
-          SERVER_USER: ${{ secrets.SERVER_USER }}
-          SERVER_SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
-          SERVER_PORT: ${{ secrets.SERVER_PORT }}
-        run: |
-          set -e
 
-          if [ -z "$SERVER_HOST" ] || [ -z "$SERVER_SSH_KEY" ]; then
-            echo "❌ Missing SERVER_HOST or SERVER_SSH_KEY secrets."
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure SSH
+        shell: bash
+        env:
+          RAW_SSH_KEY: ${{ secrets.VPS_SSH_KEY || secrets.SERVER_SSH_KEY }}
+          RAW_HOST: ${{ secrets.VPS_HOST || secrets.SERVER_HOST }}
+          RAW_PORT: ${{ secrets.VPS_PORT || secrets.SERVER_PORT || '22' }}
+        run: |
+          set -Eeuo pipefail
+          : "${RAW_SSH_KEY:?Missing SSH Key secret (VPS_SSH_KEY or SERVER_SSH_KEY)}"
+          : "${RAW_HOST:?Missing Host secret (VPS_HOST or SERVER_HOST)}"
+
+          # Clean inputs (strip carriage returns, quotes, trailing whitespaces)
+          CLEAN_KEY=$(printf '%s\n' "$RAW_SSH_KEY" | tr -d '\r')
+          CLEAN_HOST=$(printf '%s' "$RAW_HOST" | tr -d '\r\n\t "' | sed -e 's|^ssh://||' -e 's|^.*@||')
+          CLEAN_PORT=$(printf '%s' "${RAW_PORT:-22}" | tr -d '\r\n\t "')
+
+          # Extract port if host was entered as 'ip:port'
+          if printf '%s' "$CLEAN_HOST" | grep -q ":"; then
+            CLEAN_PORT=$(printf '%s' "$CLEAN_HOST" | cut -d: -f2)
+            CLEAN_HOST=$(printf '%s' "$CLEAN_HOST" | cut -d: -f1)
+          fi
+
+          echo "TARGET_HOST=$CLEAN_HOST" >> "$GITHUB_ENV"
+          echo "TARGET_PORT=${CLEAN_PORT:-22}" >> "$GITHUB_ENV"
+
+          mkdir -p "$HOME/.ssh"
+          chmod 700 "$HOME/.ssh"
+          printf '%s\n' "$CLEAN_KEY" > "$HOME/.ssh/reservation_deploy"
+          chmod 600 "$HOME/.ssh/reservation_deploy"
+
+          ssh-keygen -y -f "$HOME/.ssh/reservation_deploy" > /dev/null
+
+          ssh-keyscan -p "${CLEAN_PORT:-22}" -H "$CLEAN_HOST" >> "$HOME/.ssh/known_hosts" 2>/dev/null || true
+          touch "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/known_hosts"
+
+      - name: Deploy to VPS
+        shell: bash
+        env:
+          VPS_USER: ${{ secrets.VPS_USER || secrets.SERVER_USER || 'root' }}
+          GHCR_READ_TOKEN: ${{ secrets.GHCR_READ_TOKEN || secrets.GITHUB_TOKEN }}
+        run: |
+          set -Eeuo pipefail
+          CLEAN_USER=$(printf '%s' "${VPS_USER:-root}" | tr -d '\r\n\t "' | sed -e 's|@.*||')
+          HOST="$TARGET_HOST"
+          PORT="$TARGET_PORT"
+
+          echo "📡 Connecting to: $CLEAN_USER@$HOST on port $PORT"
+
+          SSH=(
+            ssh
+            -i "$HOME/.ssh/reservation_deploy"
+            -p "$PORT"
+            -o BatchMode=yes
+            -o StrictHostKeyChecking=accept-new
+            -o ConnectTimeout=30
+          )
+
+          SCP=(
+            scp
+            -i "$HOME/.ssh/reservation_deploy"
+            -P "$PORT"
+            -o BatchMode=yes
+            -o StrictHostKeyChecking=accept-new
+            -o ConnectTimeout=30
+          )
+
+          # Step 1: Authenticate Docker on the VPS with GHCR
+          if [ -n "${GHCR_READ_TOKEN:-}" ]; then
+            echo "🔑 Authenticating Docker with GHCR on VPS..."
+            printf '%s' "$GHCR_READ_TOKEN" | \
+              "${SSH[@]}" "$CLEAN_USER@$HOST" \
+                'docker login ghcr.io --username mmdhosain --password-stdin' || true
+          fi
+
+          # Step 2: Ensure destination directory and copy deployment files
+          echo "📁 Syncing docker-compose.yml and .env.example to VPS..."
+          "${SSH[@]}" "$CLEAN_USER@$HOST" 'mkdir -p /root/reservation_bot'
+          "${SCP[@]}" docker-compose.yml "$CLEAN_USER@$HOST:/root/reservation_bot/docker-compose.yml"
+          "${SCP[@]}" .env.example "$CLEAN_USER@$HOST:/root/reservation_bot/.env.example"
+
+          # Step 3: Pull images, configure environment, and launch containers
+          "${SSH[@]}" "$CLEAN_USER@$HOST" 'bash -se' <<'REMOTE'
+          set -Eeuo pipefail
+          cd /root/reservation_bot
+
+          trap 'docker logout ghcr.io >/dev/null 2>&1 || true' EXIT
+
+          # Initialize .env if missing
+          if [ ! -f .env ]; then
+            echo "⚠️ Initializing default .env from .env.example..."
+            cp .env.example .env
+          fi
+
+          # Stop legacy PM2 process if still running to prevent port / bot polling conflicts
+          if command -v pm2 > /dev/null 2>&1; then
+            pm2 stop reservation-bot > /dev/null 2>&1 || true
+            pm2 delete reservation-bot > /dev/null 2>&1 || true
+          fi
+
+          echo "📥 Pulling latest reservation bot image from GHCR..."
+          docker pull ghcr.io/mmdhosain/reservation-bot:latest
+          docker tag ghcr.io/mmdhosain/reservation-bot:latest reservation_bot_instagram-app:latest
+
+          echo "🐳 Launching containers with Docker Compose..."
+          if docker compose version >/dev/null 2>&1; then
+            docker compose config -q
+            docker compose up -d --no-build app db
+            sleep 4
+            echo "📊 Active Containers:"
+            docker compose ps
+            echo "📜 Application Logs:"
+            docker compose logs --tail 30 app
+          elif docker-compose version >/dev/null 2>&1; then
+            docker-compose config -q
+            docker-compose up -d --no-build app db
+            sleep 4
+            echo "📊 Active Containers:"
+            docker-compose ps
+            echo "📜 Application Logs:"
+            docker-compose logs --tail 30 app
+          else
+            echo "❌ Error: Docker Compose is not installed on the server."
             exit 1
           fi
 
-          # 1. Clean & parse SERVER_USER (strips newlines, carriage returns, quotes, and @domain)
-          CLEAN_USER=$(printf '%s' "${SERVER_USER:-root}" | tr -d '\r\n\t "' | sed -e 's|@.*||')
-          if [ -z "$CLEAN_USER" ]; then
-            TARGET_USER="root"
-          else
-            TARGET_USER="$CLEAN_USER"
-          fi
-
-          # 2. Clean & parse SERVER_HOST (handles 'ssh://root@ip:port', 'ip:port', 'ip', newlines, etc.)
-          RAW_HOST=$(printf '%s' "$SERVER_HOST" | tr -d '\r\n\t "')
-          PARSED_HOST=$(printf '%s' "$RAW_HOST" | sed -e 's|^ssh://||' -e 's|^.*@||')
-
-          if printf '%s' "$PARSED_HOST" | grep -q ":"; then
-            PORT_FROM_HOST=$(printf '%s' "$PARSED_HOST" | cut -d: -f2)
-            TARGET_HOST=$(printf '%s' "$PARSED_HOST" | cut -d: -f1)
-          else
-            PORT_FROM_HOST=""
-            TARGET_HOST="$PARSED_HOST"
-          fi
-
-          CLEAN_PORT=$(printf '%s' "${SERVER_PORT:-${PORT_FROM_HOST:-22}}" | tr -d '\r\n\t "')
-          TARGET_PORT="${CLEAN_PORT:-22}"
-
-          echo "📡 Connecting to: $TARGET_USER@$TARGET_HOST on port $TARGET_PORT"
-
-          # 3. Configure SSH private key safely
-          mkdir -p ~/.ssh
-          chmod 700 ~/.ssh
-          printf '%s\n' "$SERVER_SSH_KEY" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-
-          # 4. Connect to VPS and execute Docker deployment
-          ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=30 -p "$TARGET_PORT" "$TARGET_USER@$TARGET_HOST" 'bash -s' << 'REMOTE_SCRIPT'
-            set -e
-            echo "🚀 Successfully authenticated with VPS!"
-
-            TARGET_DIR="/root/DEV/reservation-bot"
-            if [ ! -d "$TARGET_DIR" ]; then
-              echo "📁 Target directory not found. Cloning repository into $TARGET_DIR..."
-              mkdir -p /root/DEV
-              git clone https://github.com/MmdHosain/ReservationBot.git "$TARGET_DIR"
-            fi
-
-            cd "$TARGET_DIR"
-            echo "📥 Syncing latest codebase from origin/main..."
-            git remote set-url origin https://github.com/MmdHosain/ReservationBot.git || true
-            git fetch origin main
-            git reset --hard origin/main
-
-            # Ensure .env exists
-            if [ ! -f ".env" ]; then
-              echo "⚠️ .env not found on server. Creating default .env from .env.example..."
-              cp .env.example .env
-            fi
-
-            # Stop legacy PM2 process if still running to prevent port / bot polling conflicts
-            if command -v pm2 > /dev/null 2>&1; then
-              pm2 stop reservation-bot > /dev/null 2>&1 || true
-              pm2 delete reservation-bot > /dev/null 2>&1 || true
-            fi
-
-            echo "🐳 Deploying application with Docker Compose..."
-            if docker compose version > /dev/null 2>&1; then
-              docker compose down --remove-orphans || true
-              docker compose up -d --build
-              sleep 5
-              echo "📊 Container Status:"
-              docker compose ps
-              echo "📜 Latest Bot Application Logs:"
-              docker compose logs --tail 30 app
-            elif docker-compose version > /dev/null 2>&1; then
-              docker-compose down --remove-orphans || true
-              docker-compose up -d --build
-              sleep 5
-              echo "📊 Container Status:"
-              docker-compose ps
-              echo "📜 Latest Bot Application Logs:"
-              docker-compose logs --tail 30 app
-            else
-              echo "❌ Error: Docker Compose is not installed on the server."
-              exit 1
-            fi
-
-            echo "🎉 Deployment finished successfully! The bot is running in Docker."
-          REMOTE_SCRIPT
+          echo "🎉 Deployment completed successfully! Reservation bot is running in Docker."
+          REMOTE
