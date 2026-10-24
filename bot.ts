@@ -1,18 +1,31 @@
 import "reflect-metadata";
 import "dotenv/config";
-import { startTelegramBot } from "./Telegram/src/bot.ts";
-import { startInstagramBot } from "./Instagram/src/index.ts";
+import { initDB } from "./src/db/index.ts";
+import config from "./src/config/index.ts";
+import { startBaleBot } from "./src/platforms/bale/index.ts";
+import { startTelegramBot } from "./src/platforms/telegram/index.ts";
+import { startInstagramBot } from "./src/platforms/instagram/index.ts";
 
 async function main() {
-  console.log("🚀 Starting Reservation Bot System...");
+  console.log("🚀 Initializing Reservation Bot System...");
 
-  // 1. Start Telegram Bot & Initialize Shared Database
-  await startTelegramBot();
+  // 1. Initialize Shared PostgreSQL Connection
+  await initDB();
 
-  // 2. Start Instagram Webhook Express Server
-  startInstagramBot();
+  // 2. Conditionally Start Platforms
+  if (config.platforms.bale.enabled) {
+    await startBaleBot();
+  }
 
-  console.log("✅ All systems are running concurrently!");
+  if (config.platforms.telegram.enabled) {
+    await startTelegramBot();
+  }
+
+  if (config.platforms.instagram.enabled) {
+    startInstagramBot();
+  }
+
+  console.log("✅ Active platform services are operational.");
 }
 
 // --- Global Node.js Process Crash Prevention ---
