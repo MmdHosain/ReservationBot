@@ -50,42 +50,65 @@ jobs:
           tags: reservation-bot:latest
 
   deploy:
-    name: 🚀 Continuous Deployment
+    name: 🚀 Continuous Deployment (VPS Docker)
     needs: [test, docker]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
-      - name: Check Deployment Credentials
-        id: check_creds
-        run: |
-          if [ -n "${{ secrets.SERVER_HOST }}" ] && [ -n "${{ secrets.SERVER_SSH_KEY }}" ]; then
-            echo "has_creds=true" >> $GITHUB_OUTPUT
-          else
-            echo "has_creds=false" >> $GITHUB_OUTPUT
-            echo "ℹ️ SSH deployment secrets (SERVER_HOST, SERVER_SSH_KEY) are not set. Skipping auto-deploy step."
-          fi
-
-      - name: Deploy to Remote Server
-        if: steps.check_creds.outputs.has_creds == 'true'
+      - name: Deploy to VPS via SSH & Run Docker
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER || 'root' }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT || 22 }}
+          script_stop: true
           script: |
             set -e
-            echo "🚀 Deploying to server..."
-            if [ -d "/root/DEV/reservation-bot" ]; then
-              cd /root/DEV/reservation-bot
-              git pull origin main || true
-              if [ -f "docker-compose.yml" ]; then
-                docker compose up -d --build
-              else
-                npm install
-                pm2 restart reservation-bot || npm run start
-              fi
-              echo "✅ Deployment completed successfully!"
-            else
-              echo "⚠️ Directory /root/DEV/reservation-bot not found on server."
+            echo "🚀 Starting deployment on VPS..."
+            TARGET_DIR="/root/DEV/reservation-bot"
+
+            if [ ! -d "$TARGET_DIR" ]; then
+              echo "📁 Target directory not found. Cloning repository to $TARGET_DIR..."
+              mkdir -p /root/DEV
+              git clone https://github.com/MmdHosain/ReservationBot.git "$TARGET_DIR"
             fi
+
+            cd "$TARGET_DIR"
+            echo "📥 Fetching latest changes from origin/main..."
+            git remote set-url origin https://github.com/MmdHosain/ReservationBot.git || true
+            git fetch origin main
+            git reset --hard origin/main
+
+            # Ensure .env exists
+            if [ ! -f ".env" ]; then
+              echo "⚠️ .env not found on server. Initializing from .env.example..."
+              cp .env.example .env
+            fi
+
+            # Stop legacy PM2 process if exists to avoid port/token conflicts
+            if command -v pm2 > /dev/null 2>&1; then
+              pm2 stop reservation-bot > /dev/null 2>&1 || true
+              pm2 delete reservation-bot > /dev/null 2>&1 || true
+            fi
+
+            # Deploy using Docker Compose
+            echo "🐳 Starting Docker containers on VPS..."
+            if docker compose version > /dev/null 2>&1; then
+              docker compose down --remove-orphans || true
+              docker compose up -d --build
+              sleep 5
+              docker compose ps
+              docker compose logs --tail 30 app
+            elif docker-compose version > /dev/null 2>&1; then
+              docker-compose down --remove-orphans || true
+              docker-compose up -d --build
+              sleep 5
+              docker-compose ps
+              docker-compose logs --tail 30 app
+            else
+              echo "❌ Error: Neither 'docker compose' nor 'docker-compose' is installed on the server."
+              exit 1
+            fi
+
+            echo "✅ Deployment finished and bot is actively running in Docker!"
