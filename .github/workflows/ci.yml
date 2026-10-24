@@ -56,59 +56,95 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Deploy to VPS via SSH & Run Docker
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER || 'root' }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          port: ${{ secrets.SERVER_PORT || 22 }}
-          script_stop: true
-          script: |
-            set -e
-            echo "🚀 Starting deployment on VPS..."
-            TARGET_DIR="/root/DEV/reservation-bot"
+        env:
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+          SERVER_SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
+          SERVER_PORT: ${{ secrets.SERVER_PORT }}
+        run: |
+          set -e
 
+          if [ -z "$SERVER_HOST" ] || [ -z "$SERVER_SSH_KEY" ]; then
+            echo "❌ Missing SERVER_HOST or SERVER_SSH_KEY secrets."
+            exit 1
+          fi
+
+          # 1. Clean & parse SERVER_HOST (handles 'ssh://root@ip:port', 'ip:port', 'ip', etc.)
+          RAW_HOST=$(echo "$SERVER_HOST" | tr -d ' \r\n\t')
+          PARSED_HOST=$(echo "$RAW_HOST" | sed -e 's|^ssh://||' -e 's|^.*@||')
+
+          if echo "$PARSED_HOST" | grep -q ":"; then
+            PORT_FROM_HOST=$(echo "$PARSED_HOST" | cut -d: -f2)
+            TARGET_HOST=$(echo "$PARSED_HOST" | cut -d: -f1)
+          else
+            PORT_FROM_HOST=""
+            TARGET_HOST="$PARSED_HOST"
+          fi
+
+          TARGET_PORT="${SERVER_PORT:-${PORT_FROM_HOST:-22}}"
+          TARGET_USER="${SERVER_USER:-root}"
+
+          echo "📡 Target VPS: $TARGET_USER@$TARGET_HOST on port $TARGET_PORT"
+
+          # 2. Configure SSH private key
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          echo "$SERVER_SSH_KEY" > ~/.ssh/id_rsa
+          # Ensure trailing newline
+          sed -i -e '$a\' ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+          # 3. Connect to VPS and execute Docker deployment
+          ssh -o StrictHostKeyChecking=no -o ConnectTimeout=30 -p "$TARGET_PORT" "$TARGET_USER@$TARGET_HOST" 'bash -s' << 'REMOTE_SCRIPT'
+            set -e
+            echo "🚀 Successfully authenticated with VPS!"
+            
+            TARGET_DIR="/root/DEV/reservation-bot"
             if [ ! -d "$TARGET_DIR" ]; then
-              echo "📁 Target directory not found. Cloning repository to $TARGET_DIR..."
+              echo "📁 Target directory not found. Cloning repository into $TARGET_DIR..."
               mkdir -p /root/DEV
               git clone https://github.com/MmdHosain/ReservationBot.git "$TARGET_DIR"
             fi
 
             cd "$TARGET_DIR"
-            echo "📥 Fetching latest changes from origin/main..."
+            echo "📥 Syncing latest codebase from origin/main..."
             git remote set-url origin https://github.com/MmdHosain/ReservationBot.git || true
             git fetch origin main
             git reset --hard origin/main
 
             # Ensure .env exists
             if [ ! -f ".env" ]; then
-              echo "⚠️ .env not found on server. Initializing from .env.example..."
+              echo "⚠️ .env not found on server. Creating default .env from .env.example..."
               cp .env.example .env
             fi
 
-            # Stop legacy PM2 process if exists to avoid port/token conflicts
+            # Stop legacy PM2 process if still running to prevent port / bot polling conflicts
             if command -v pm2 > /dev/null 2>&1; then
               pm2 stop reservation-bot > /dev/null 2>&1 || true
               pm2 delete reservation-bot > /dev/null 2>&1 || true
             fi
 
-            # Deploy using Docker Compose
-            echo "🐳 Starting Docker containers on VPS..."
+            echo "🐳 Deploying application with Docker Compose..."
             if docker compose version > /dev/null 2>&1; then
               docker compose down --remove-orphans || true
               docker compose up -d --build
               sleep 5
+              echo "📊 Container Status:"
               docker compose ps
+              echo "📜 Latest Bot Application Logs:"
               docker compose logs --tail 30 app
             elif docker-compose version > /dev/null 2>&1; then
               docker-compose down --remove-orphans || true
               docker-compose up -d --build
               sleep 5
+              echo "📊 Container Status:"
               docker-compose ps
+              echo "📜 Latest Bot Application Logs:"
               docker-compose logs --tail 30 app
             else
-              echo "❌ Error: Neither 'docker compose' nor 'docker-compose' is installed on the server."
+              echo "❌ Error: Docker Compose is not installed on the server."
               exit 1
             fi
 
-            echo "✅ Deployment finished and bot is actively running in Docker!"
+            echo "🎉 Deployment finished successfully! The bot is running in Docker."
+          REMOTE_SCRIPT
