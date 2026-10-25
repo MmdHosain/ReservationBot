@@ -74,6 +74,7 @@ jobs:
             -o StrictHostKeyChecking=no \
             -o UserKnownHostsFile=/dev/null \
             -o IdentitiesOnly=yes \
+            -o KexAlgorithms=curve25519-sha256 \
             -o ConnectTimeout=15 \
             "$CLEAN_USER@$CLEAN_HOST" 'bash -s' << 'REMOTE_DIAG'
 

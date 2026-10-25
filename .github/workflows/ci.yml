@@ -98,8 +98,8 @@ jobs:
 
           echo "📡 Connecting to: $CLEAN_USER@$CLEAN_HOST on port $CLEAN_PORT..."
 
-          SSH_CMD="ssh -i $HOME/.ssh/deploy_key -p $CLEAN_PORT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o IdentitiesOnly=yes -o ConnectTimeout=30"
-          SCP_CMD="scp -i $HOME/.ssh/deploy_key -P $CLEAN_PORT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o IdentitiesOnly=yes -o ConnectTimeout=30"
+          SSH_CMD="ssh -i $HOME/.ssh/deploy_key -p $CLEAN_PORT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o IdentitiesOnly=yes -o KexAlgorithms=curve25519-sha256 -o ConnectTimeout=30"
+          SCP_CMD="scp -i $HOME/.ssh/deploy_key -P $CLEAN_PORT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o IdentitiesOnly=yes -o KexAlgorithms=curve25519-sha256 -o ConnectTimeout=30"
 
           # 1. Ensure target directory exists on server
           $SSH_CMD "$CLEAN_USER@$CLEAN_HOST" "mkdir -p /root/reservation_bot"
