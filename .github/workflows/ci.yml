@@ -76,7 +76,7 @@ jobs:
         env:
           RAW_SSH_KEY: ${{ secrets.VPS_SSH_KEY || secrets.SERVER_SSH_KEY }}
           RAW_HOST: ${{ secrets.VPS_HOST || secrets.SERVER_HOST }}
-          RAW_PORT: ${{ secrets.VPS_PORT || secrets.SERVER_PORT || '22' }}
+          RAW_PORT: ${{ secrets.VPS_PORT || secrets.SERVER_PORT || secrets.SSH_PORT || secrets.PORT }}
         run: |
           set -Eeuo pipefail
           : "${RAW_SSH_KEY:?Missing SSH Key secret (VPS_SSH_KEY or SERVER_SSH_KEY)}"
@@ -85,16 +85,22 @@ jobs:
           # Clean inputs (strip carriage returns, quotes, trailing whitespaces)
           CLEAN_KEY=$(printf '%s\n' "$RAW_SSH_KEY" | tr -d '\r')
           CLEAN_HOST=$(printf '%s' "$RAW_HOST" | tr -d '\r\n\t "' | sed -e 's|^ssh://||' -e 's|^.*@||')
-          CLEAN_PORT=$(printf '%s' "${RAW_PORT:-22}" | tr -d '\r\n\t "')
+          CLEAN_PORT=$(printf '%s' "${RAW_PORT:-}" | tr -d '\r\n\t "')
 
-          # Extract port if host was entered as 'ip:port'
-          if printf '%s' "$CLEAN_HOST" | grep -q ":"; then
+          # If port was not provided in port secret, check if host was entered as 'ip:port'
+          if [ -z "$CLEAN_PORT" ] && printf '%s' "$CLEAN_HOST" | grep -q ":"; then
             CLEAN_PORT=$(printf '%s' "$CLEAN_HOST" | cut -d: -f2)
             CLEAN_HOST=$(printf '%s' "$CLEAN_HOST" | cut -d: -f1)
           fi
 
+          # Port must be read from secrets
+          if [ -z "$CLEAN_PORT" ]; then
+            echo "❌ Error: Missing SSH Port secret. Please configure VPS_PORT (or SERVER_PORT / SSH_PORT) in repository secrets."
+            exit 1
+          fi
+
           echo "TARGET_HOST=$CLEAN_HOST" >> "$GITHUB_ENV"
-          echo "TARGET_PORT=${CLEAN_PORT:-22}" >> "$GITHUB_ENV"
+          echo "TARGET_PORT=$CLEAN_PORT" >> "$GITHUB_ENV"
 
           mkdir -p "$HOME/.ssh"
           chmod 700 "$HOME/.ssh"
@@ -103,7 +109,7 @@ jobs:
 
           ssh-keygen -y -f "$HOME/.ssh/reservation_deploy" > /dev/null
 
-          ssh-keyscan -p "${CLEAN_PORT:-22}" -H "$CLEAN_HOST" >> "$HOME/.ssh/known_hosts" 2>/dev/null || true
+          ssh-keyscan -p "$CLEAN_PORT" -H "$CLEAN_HOST" >> "$HOME/.ssh/known_hosts" 2>/dev/null || true
           touch "$HOME/.ssh/known_hosts"
           chmod 600 "$HOME/.ssh/known_hosts"
 
@@ -118,7 +124,7 @@ jobs:
           HOST="$TARGET_HOST"
           PORT="$TARGET_PORT"
 
-          echo "📡 Connecting to: $CLEAN_USER@$HOST on port $PORT"
+          echo "📡 Connecting to: $CLEAN_USER@$HOST on port $PORT (loaded from secrets)"
 
           SSH=(
             ssh
