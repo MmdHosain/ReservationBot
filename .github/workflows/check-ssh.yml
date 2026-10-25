@@ -1,0 +1,125 @@
+name: Check SSH Connection
+
+on:
+  workflow_dispatch:
+
+jobs:
+  check-connection:
+    name: 🔍 Test VPS SSH Connection & Server Diagnostics
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Detailed SSH Connection & Diagnostics
+        shell: bash
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST || secrets.SERVER_HOST }}
+          VPS_PORT: ${{ secrets.VPS_PORT || secrets.SERVER_PORT }}
+          VPS_USER: ${{ secrets.VPS_USER || secrets.SERVER_USER || 'root' }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY || secrets.SERVER_SSH_KEY }}
+        run: |
+          set -Eeuo pipefail
+
+          echo "=================================================="
+          echo "🔍 1. Validating Secrets Configuration"
+          echo "=================================================="
+          : "${VPS_HOST:?❌ Missing secret VPS_HOST}"
+          : "${VPS_PORT:?❌ Missing secret VPS_PORT}"
+          : "${VPS_SSH_KEY:?❌ Missing secret VPS_SSH_KEY}"
+
+          CLEAN_HOST=$(printf '%s' "$VPS_HOST" | tr -d '\r\n\t "')
+          CLEAN_PORT=$(printf '%s' "$VPS_PORT" | tr -d '\r\n\t "')
+          CLEAN_USER=$(printf '%s' "${VPS_USER:-root}" | tr -d '\r\n\t "' | sed -e 's|@.*||')
+
+          echo "✅ Secret VPS_HOST is set to: $CLEAN_HOST"
+          echo "✅ Secret VPS_PORT is set to: $CLEAN_PORT"
+          echo "✅ Secret VPS_USER is set to: $CLEAN_USER"
+
+          echo "=================================================="
+          echo "🔑 2. SSH Key Format & Fingerprint Analysis"
+          echo "=================================================="
+          mkdir -p "$HOME/.ssh"
+          chmod 700 "$HOME/.ssh"
+          printf '%s\n' "$VPS_SSH_KEY" | tr -d '\r' > "$HOME/.ssh/test_deploy_key"
+          chmod 600 "$HOME/.ssh/test_deploy_key"
+
+          KEY_LINES=$(wc -l < "$HOME/.ssh/test_deploy_key")
+          KEY_HEADER=$(head -n 1 "$HOME/.ssh/test_deploy_key")
+          KEY_FOOTER=$(tail -n 1 "$HOME/.ssh/test_deploy_key")
+
+          echo "Header: $KEY_HEADER"
+          echo "Footer: $KEY_FOOTER"
+          echo "Total Lines: $KEY_LINES"
+
+          echo -n "Key Fingerprint: "
+          ssh-keygen -l -f "$HOME/.ssh/test_deploy_key" || {
+            echo "❌ Invalid SSH private key format. Ensure it is OpenSSH format."
+            exit 1
+          }
+
+          echo "=================================================="
+          echo "🌐 3. Network & TCP Port Reachability Check"
+          echo "=================================================="
+          if timeout 5 bash -c "</dev/tcp/$CLEAN_HOST/$CLEAN_PORT" 2>/dev/null; then
+            echo "✅ TCP port $CLEAN_PORT on $CLEAN_HOST is reachable!"
+          else
+            echo "⚠️ Warning: Cannot connect to $CLEAN_HOST:$CLEAN_PORT via /dev/tcp. Firewall may be blocking or host unreachable."
+          fi
+
+          echo "=================================================="
+          echo "📡 4. SSH Handshake & Authentication (Verbose: -vvv)"
+          echo "=================================================="
+          ssh -vvv \
+            -i "$HOME/.ssh/test_deploy_key" \
+            -p "$CLEAN_PORT" \
+            -o StrictHostKeyChecking=no \
+            -o UserKnownHostsFile=/dev/null \
+            -o IdentitiesOnly=yes \
+            -o ConnectTimeout=15 \
+            "$CLEAN_USER@$CLEAN_HOST" 'bash -s' << 'REMOTE_DIAG'
+
+            echo "=================================================="
+            echo "🎉 5. Remote Server Diagnostics (Inside VPS)"
+            echo "=================================================="
+            echo "👤 Logged in as: $(whoami)"
+            echo "🖥️ Hostname: $(hostname)"
+            echo "🐧 OS / Kernel: $(uname -srm)"
+            if [ -f /etc/os-release ]; then
+              grep PRETTY_NAME /etc/os-release || true
+            fi
+            echo "⏱️ Uptime: $(uptime)"
+
+            echo "--------------------------------------------------"
+            echo "🐳 Docker Environment Check:"
+            if command -v docker >/dev/null 2>&1; then
+              docker --version
+              echo "Active Containers:"
+              docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+            else
+              echo "❌ Docker is not installed on this server!"
+            fi
+
+            if docker compose version >/dev/null 2>&1; then
+              echo "Docker Compose: $(docker compose version)"
+            elif docker-compose version >/dev/null 2>&1; then
+              echo "Docker Compose: $(docker-compose version)"
+            else
+              echo "⚠️ Warning: Neither 'docker compose' nor 'docker-compose' found."
+            fi
+
+            echo "--------------------------------------------------"
+            echo "📁 Target Deployment Directory Check:"
+            if [ -d "/root/reservation_bot" ]; then
+              echo "Directory /root/reservation_bot exists:"
+              ls -la /root/reservation_bot
+            else
+              echo "Directory /root/reservation_bot does not exist yet (will be created on first deploy)."
+            fi
+
+            echo "--------------------------------------------------"
+            echo "💾 Disk Space:"
+            df -h /
+
+            echo "=================================================="
+            echo "✅ All SSH and server diagnostic checks passed!"
+            echo "=================================================="
+          REMOTE_DIAG
