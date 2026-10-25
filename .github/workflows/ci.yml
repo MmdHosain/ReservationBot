@@ -71,95 +71,53 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Configure SSH
-        shell: bash
-        env:
-          RAW_SSH_KEY: ${{ secrets.VPS_SSH_KEY || secrets.SERVER_SSH_KEY }}
-          RAW_HOST: ${{ secrets.VPS_HOST || secrets.SERVER_HOST }}
-          RAW_PORT: ${{ secrets.VPS_PORT || secrets.SERVER_PORT || secrets.SSH_PORT || secrets.PORT }}
-        run: |
-          set -Eeuo pipefail
-          : "${RAW_SSH_KEY:?Missing SSH Key secret (VPS_SSH_KEY or SERVER_SSH_KEY)}"
-          : "${RAW_HOST:?Missing Host secret (VPS_HOST or SERVER_HOST)}"
-
-          # Clean inputs (strip carriage returns, quotes, trailing whitespaces)
-          CLEAN_KEY=$(printf '%s\n' "$RAW_SSH_KEY" | tr -d '\r')
-          CLEAN_HOST=$(printf '%s' "$RAW_HOST" | tr -d '\r\n\t "' | sed -e 's|^ssh://||' -e 's|^.*@||')
-          CLEAN_PORT=$(printf '%s' "${RAW_PORT:-}" | tr -d '\r\n\t "')
-
-          # If port was not provided in port secret, check if host was entered as 'ip:port'
-          if [ -z "$CLEAN_PORT" ] && printf '%s' "$CLEAN_HOST" | grep -q ":"; then
-            CLEAN_PORT=$(printf '%s' "$CLEAN_HOST" | cut -d: -f2)
-            CLEAN_HOST=$(printf '%s' "$CLEAN_HOST" | cut -d: -f1)
-          fi
-
-          # Port must be read from secrets
-          if [ -z "$CLEAN_PORT" ]; then
-            echo "❌ Error: Missing SSH Port secret. Please configure VPS_PORT (or SERVER_PORT / SSH_PORT) in repository secrets."
-            exit 1
-          fi
-
-          echo "TARGET_HOST=$CLEAN_HOST" >> "$GITHUB_ENV"
-          echo "TARGET_PORT=$CLEAN_PORT" >> "$GITHUB_ENV"
-
-          mkdir -p "$HOME/.ssh"
-          chmod 700 "$HOME/.ssh"
-          printf '%s\n' "$CLEAN_KEY" > "$HOME/.ssh/reservation_deploy"
-          chmod 600 "$HOME/.ssh/reservation_deploy"
-
-          ssh-keygen -y -f "$HOME/.ssh/reservation_deploy" > /dev/null
-
-          ssh-keyscan -p "$CLEAN_PORT" -H "$CLEAN_HOST" >> "$HOME/.ssh/known_hosts" 2>/dev/null || true
-          touch "$HOME/.ssh/known_hosts"
-          chmod 600 "$HOME/.ssh/known_hosts"
-
       - name: Deploy to VPS
         shell: bash
         env:
+          VPS_HOST: ${{ secrets.VPS_HOST || secrets.SERVER_HOST }}
+          VPS_PORT: ${{ secrets.VPS_PORT || secrets.SERVER_PORT }}
           VPS_USER: ${{ secrets.VPS_USER || secrets.SERVER_USER || 'root' }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY || secrets.SERVER_SSH_KEY }}
           GHCR_READ_TOKEN: ${{ secrets.GHCR_READ_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
           set -Eeuo pipefail
+
+          : "${VPS_HOST:?Missing secret VPS_HOST}"
+          : "${VPS_PORT:?Missing secret VPS_PORT}"
+          : "${VPS_SSH_KEY:?Missing secret VPS_SSH_KEY}"
+
+          CLEAN_HOST=$(printf '%s' "$VPS_HOST" | tr -d '\r\n\t "')
+          CLEAN_PORT=$(printf '%s' "$VPS_PORT" | tr -d '\r\n\t "')
           CLEAN_USER=$(printf '%s' "${VPS_USER:-root}" | tr -d '\r\n\t "' | sed -e 's|@.*||')
-          HOST="$TARGET_HOST"
-          PORT="$TARGET_PORT"
 
-          echo "📡 Connecting to: $CLEAN_USER@$HOST on port $PORT (loaded from secrets)"
+          # Setup SSH key file with exact Unix newline formatting and secure permissions
+          mkdir -p "$HOME/.ssh"
+          chmod 700 "$HOME/.ssh"
+          printf '%s\n' "$VPS_SSH_KEY" | tr -d '\r' > "$HOME/.ssh/deploy_key"
+          chmod 600 "$HOME/.ssh/deploy_key"
 
-          SSH=(
-            ssh
-            -i "$HOME/.ssh/reservation_deploy"
-            -p "$PORT"
-            -o BatchMode=yes
-            -o StrictHostKeyChecking=accept-new
-            -o ConnectTimeout=30
-          )
+          echo "📡 Connecting to: $CLEAN_USER@$CLEAN_HOST on port $CLEAN_PORT..."
 
-          SCP=(
-            scp
-            -i "$HOME/.ssh/reservation_deploy"
-            -P "$PORT"
-            -o BatchMode=yes
-            -o StrictHostKeyChecking=accept-new
-            -o ConnectTimeout=30
-          )
+          SSH_CMD="ssh -i $HOME/.ssh/deploy_key -p $CLEAN_PORT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o IdentitiesOnly=yes -o ConnectTimeout=30"
+          SCP_CMD="scp -i $HOME/.ssh/deploy_key -P $CLEAN_PORT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o IdentitiesOnly=yes -o ConnectTimeout=30"
 
-          # Step 1: Authenticate Docker on the VPS with GHCR
+          # 1. Ensure target directory exists on server
+          $SSH_CMD "$CLEAN_USER@$CLEAN_HOST" "mkdir -p /root/reservation_bot"
+
+          # 2. Copy deployment configuration files
+          echo "📁 Syncing docker-compose.yml and .env.example to VPS..."
+          $SCP_CMD docker-compose.yml "$CLEAN_USER@$CLEAN_HOST:/root/reservation_bot/docker-compose.yml"
+          $SCP_CMD .env.example "$CLEAN_USER@$CLEAN_HOST:/root/reservation_bot/.env.example"
+
+          # 3. Authenticate Docker with GHCR if token is provided
           if [ -n "${GHCR_READ_TOKEN:-}" ]; then
             echo "🔑 Authenticating Docker with GHCR on VPS..."
-            printf '%s' "$GHCR_READ_TOKEN" | \
-              "${SSH[@]}" "$CLEAN_USER@$HOST" \
-                'docker login ghcr.io --username mmdhosain --password-stdin' || true
+            printf '%s' "$GHCR_READ_TOKEN" | $SSH_CMD "$CLEAN_USER@$CLEAN_HOST" "docker login ghcr.io --username mmdhosain --password-stdin" || true
           fi
 
-          # Step 2: Ensure destination directory and copy deployment files
-          echo "📁 Syncing docker-compose.yml and .env.example to VPS..."
-          "${SSH[@]}" "$CLEAN_USER@$HOST" 'mkdir -p /root/reservation_bot'
-          "${SCP[@]}" docker-compose.yml "$CLEAN_USER@$HOST:/root/reservation_bot/docker-compose.yml"
-          "${SCP[@]}" .env.example "$CLEAN_USER@$HOST:/root/reservation_bot/.env.example"
-
-          # Step 3: Pull images, configure environment, and launch containers
-          "${SSH[@]}" "$CLEAN_USER@$HOST" 'bash -se' <<'REMOTE'
+          # 4. Pull images, configure environment, and launch containers
+          echo "🐳 Launching application on VPS..."
+          $SSH_CMD "$CLEAN_USER@$CLEAN_HOST" 'bash -se' <<'REMOTE'
           set -Eeuo pipefail
           cd /root/reservation_bot
 
