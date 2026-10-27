@@ -62,5 +62,7 @@ export const handleText = async (ctx: CategoriesContext) => {
     await view.showSuccess(ctx, CategoriesMessages.editSuccess);
     ctx.scene.session.action = "list";
     await handleList(ctx);
+  } else {
+    await ctx.reply("👆 لطفاً از دکمه‌های شیشه‌ای بالا استفاده فرمایید، یا برای شروع مجدد /start را بفرستید.");
   }
 };

@@ -44,6 +44,8 @@ export const handleText = async (ctx: ServicesContext) => {
     }
     ctx.scene.session.action = "menu";
     await handleMenu(ctx);
+  } else {
+    await ctx.reply("👆 لطفاً از دکمه‌های بالا استفاده فرمایید، یا برای شروع مجدد /start را بفرستید.");
   }
 };
 

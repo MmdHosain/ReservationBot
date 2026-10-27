@@ -22,4 +22,10 @@ Scene.on("text", async (ctx) => {
   if (step === "ask_salon_name") await controller.handleSalonName(ctx);
   else if (step === "ask_service_name") await controller.handleServiceName(ctx);
   else if (step === "ask_duration") await controller.handleDurationText(ctx);
+  else {
+    await ctx.reply(
+      "👆 لطفاً از گزینه‌ها یا دکمه‌های بالا برای ادامه استفاده کنید.\n\n" +
+      "🔄 همچنین هر زمان که مایل بودید می‌توانید با ارسال /start از اول شروع کنید."
+    );
+  }
 });

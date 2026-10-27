@@ -8,6 +8,16 @@ export const handleStartCommand = async (ctx: MyContext) => {
   const telegramId = ctx.from?.id;
   if (!telegramId) return;
 
+  // 1. Always reset scenes and clean session on /start
+  if (ctx.scene?.current) {
+    await ctx.scene.leave().catch(() => {});
+  }
+  if (ctx.session) {
+    delete (ctx.session as any).__scenes;
+    delete (ctx.session as any).draft;
+    delete (ctx.session as any).step;
+  }
+
   const text = ctx.message && "text" in ctx.message ? ctx.message.text : "";
   const parts = text.split(" ");
 

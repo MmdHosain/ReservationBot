@@ -21,6 +21,18 @@ botHandlers.command("admin", handleAdminCommand);
 botHandlers.command("delete", handleDeleteCommand);
 botHandlers.command("profile", handleProfileCommand);
 
+botHandlers.command("cancel", async (ctx) => {
+  if (ctx.scene?.current) {
+    await ctx.scene.leave().catch(() => {});
+  }
+  if (ctx.session) {
+    delete (ctx.session as any).__scenes;
+    delete (ctx.session as any).draft;
+    delete (ctx.session as any).step;
+  }
+  await ctx.reply("❌ عملیات جاری لغو شد.\n\nبرای شروع دوباره، دستور /start را ارسال کنید.");
+});
+
 botHandlers.action(/reply_salon_(\d+)/, async (ctx) => {
   await ctx.answerCbQuery().catch(() => {});
   const salonId = parseInt(ctx.match[1]);
@@ -60,4 +72,17 @@ botHandlers.on("successful_payment", async (ctx) => {
       }
     }
   }
+});
+
+// Fallback message handler: guides the user whenever an unhandled message arrives
+botHandlers.on("message", async (ctx) => {
+  await ctx.reply(
+    `👋 سلام ${ctx.from?.first_name || "کاربر گرامی"}!\n\n` +
+    `پیام شما دریافت شد. برای کار با ربات می‌توانید از دستورات زیر استفاده فرمایید:\n\n` +
+    `🚀 شروع مجدد و راه‌اندازی: /start\n` +
+    `📊 پنل مدیریت نوبت‌دهی: /manager\n` +
+    `📅 رزرو نوبت یا نوبت‌های من: /customer\n` +
+    `👤 حساب کاربری: /profile\n\n` +
+    `💡 هر زمان که در هر مرحله‌ای نیاز به شروع دوباره داشتید، کافیست دستور /start را بفرستید.`
+  );
 });
